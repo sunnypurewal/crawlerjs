@@ -3,10 +3,8 @@ const jsonfile = require("jsonfile")
 const urlparse = require("url-parse")
 const urllib = require("url")
 const robots = require("./robots/robots")
-const cache = require("./cache/cache")
 
 const start = (callback, filename="domains.json") => {
-  cache.setPath("./.cache")
   jsonfile.readFile(filename, (err, obj) => {
     if (err) console.log(err)
     const domains = []

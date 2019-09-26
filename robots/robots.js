@@ -1,8 +1,7 @@
 'use strict'
 const config = require("../config")
-const fetch = require("node-fetch")
+const http = require("../http/http")
 const robotsparser = require("./robots-parser")
-const cache = require("../cache/cache")
 const url = require("url")
 
 const fetchoptions = {
@@ -22,7 +21,7 @@ const get = async (url) => {
     robotstxt = await cache.get(url)
   } catch (error) {
     console.log("Fetching robotstxt")
-    const response = await fetch(url)
+    const response = await http.get(url)
     console.log("Fetched")
     robotstxt = await response.text()
     cache.set(url, robotstxt)
