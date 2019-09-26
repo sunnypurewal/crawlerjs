@@ -1,0 +1,22 @@
+{
+  "name": "crawlerjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "nodemon ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsonfile": "^5.0.0",
+    "node-fetch": "^2.6.0",
+    "sitemap-stream-parser": "^1.7.0",
+    "url-parse": "^1.4.7"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.2"
+  }
+}
