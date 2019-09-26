@@ -1,6 +1,5 @@
 'use strict'
 const jsonfile = require("jsonfile")
-const urlparse = require("url-parse")
 const urllib = require("url")
 const robots = require("./robots/robots")
 
@@ -12,10 +11,7 @@ const start = (callback, filename="domains.json") => {
     for (const cat of categories) {
       const urlList = obj[cat]
       for (const u of urlList) {
-        const url = new urlparse(u)
-        if (url.href.length == 0) continue
-        if (url.protocol.length == 0) url.set("protocol", "http")
-        domains.push(new urllib.URL(url.href))
+        domains.push(u)
       }
     }
     callback(domains)
@@ -30,9 +26,9 @@ start((domains) => {
     i = Math.floor(Math.random() * domains.length-1)
   }
   console.log(`Fetching robots for ${random.length} domains`)
-  // for (const domain of random) {
-  domains = [new URL("http://thenewstribune.com")]
-  for (const domain of domains) {
+  for (const domain of random) {
+  // domains = [new URL("https://www.miamiherald.com/robots.txt")]
+  // for (const domain of domains) {
     robots.get(domain, (robots/*: RobotsTxt */) => {
       if (robots) {
       }

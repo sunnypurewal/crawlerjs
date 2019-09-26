@@ -22,6 +22,7 @@ const setPath = async (path) => {
 }
 
 const get = async (url) => {
+  console.log("GETTING CACHE ", url)
   if (!CACHE_PATH) return new CacheError("must call cache.setPath first")
   const folderhash = crypto.createHash("sha256")
   folderhash.update(url.origin)
