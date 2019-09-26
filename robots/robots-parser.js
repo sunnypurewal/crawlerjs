@@ -1,5 +1,5 @@
 'use strict'
-const config = require("./config")
+const config = require("../config")
 
 class RobotsTxt {
   constructor(url) {
@@ -46,7 +46,6 @@ const parseUserAgent = (lines, startIndex, robots) => {
     const kv = getKeyVal(line)
     const key = kv.key
     const val = kv.val
-    console.log(key, val)
     if (key === "allow") { 
       robots.allows.push(val)
     } else if (key === "disallow") {

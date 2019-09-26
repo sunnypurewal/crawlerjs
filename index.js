@@ -2,9 +2,11 @@
 const jsonfile = require("jsonfile")
 const urlparse = require("url-parse")
 const urllib = require("url")
-const robots = require("./robots")
+const robots = require("./robots/robots")
+const cache = require("./cache/cache")
 
 const start = (callback, filename="domains.json") => {
+  cache.setPath("./.cache")
   jsonfile.readFile(filename, (err, obj) => {
     if (err) console.log(err)
     const domains = []
@@ -24,18 +26,17 @@ const start = (callback, filename="domains.json") => {
 
 start((domains) => {
   let i = Math.floor(Math.random() * domains.length-1)
-  const random = [""]
+  const random = []
   for (let j = 0; j < 1; j++) {
     random.push(domains[i])
     i = Math.floor(Math.random() * domains.length-1)
   }
   console.log(`Fetching robots for ${random.length} domains`)
-  for (const domain of random) {
-    // domains = [new URL("https://shorensteincenter.org")]
-    // for (const domain of domains) {
+  // for (const domain of random) {
+  domains = [new URL("http://thenewstribune.com")]
+  for (const domain of domains) {
     robots.get(domain, (robots/*: RobotsTxt */) => {
       if (robots) {
-        console.log(`Fetched ${domain}\n${robots.toString()}`)
       }
     })
   }
