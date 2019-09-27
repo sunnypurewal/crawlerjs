@@ -12,10 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "jsonfile": "^5.0.0",
-    "node-fetch": "^2.6.0",
     "redis": "^2.8.0",
     "sitemap-stream-parser": "^1.7.0",
-    "winston": "^3.2.1"
+    "robotsdottxt": "file:local_modules/robotsdottxt",
+    "hittp": "file:local_modules/hittp"
   },
   "devDependencies": {
     "@types/redis": "^2.8.14",

@@ -1,6 +1,4 @@
 'use strict'
-const config = require("../config")
-
 class RobotsTxt {
   constructor(url) {
     this.allows = []
@@ -14,7 +12,7 @@ class RobotsTxt {
     Allows: ${this.allows}
     Disallows: ${this.disallows}
     Sitemaps: ${this.sitemaps}
-    ` 
+    `
   }
 }
 
@@ -28,7 +26,7 @@ const parse = (robotstxt/*: string */, baseURL) => {
     const key = kv.key
     const val = kv.val
     if (key === "user-agent") {
-      if (val === "*" || val === config.useragent) {
+      if (val === "*") {
         i = parseUserAgent(lines, i+1, robots)
       }
     } else if (key === "sitemap") {

@@ -1,32 +1,14 @@
 'use strict'
-const jsonfile = require("jsonfile")
-const urllib = require("url")
-const robots = require("./robots/robots")
 const discovery = require("./urldiscovery/urldiscovery")
+const robotsdottxt = require("robotsdottxt")
 
 const getRobots = async () => {
-// (async () => {
-  let domains = await discovery.fromJSON("./.data/domains.json")
-  const bots = []
-  // const random = Math.floor(Math.random() * domains.length-1)
-  // domains = domains.slice(random, random+200)
-  // domains = ["opensecrets.org"]
-  console.log(`Fetching robots for ${domains.length} domains`)
-  // let i = 0
-  // for (const domain of domains) {
-  //   robots.get(domain).then(robot => {
-  //     if (robot != null) {
-  //       bots.push(robot)
-  //     }
-  //     i++
-  //     console.log(i)
-  //   })
-  // }
-  // while (i < domains.length) await sleep(500)
-  return bots
-}
-const sleep = (milliseconds) => {
-  return new Promise(resolve => setTimeout(resolve, milliseconds))
+  let urls = await discovery.fromJSON("./.data/domains.json")
+  const random = Math.floor(Math.random() * urls.length-1)
+  urls = urls.slice(random, random+1)
+  // urls = ["opensecrets.org"]
+  let robots = await robotsdottxt.run(urls)
+  return robots
 }
 
 (async () => {

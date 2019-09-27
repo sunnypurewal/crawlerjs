@@ -1,12 +1,12 @@
 'use strict'
-const config = require("../config")
-const http = require("../http/http")
+const http = require("hittp")
 const robotsparser = require("./robotsparser")
+const urlparse = http.urlparse
 const url = require("url")
-const urlparse = require("../http/urlparse")
 
 const get = async (url) => {
-  url = urlparse.parse(`${url}/robots.txt`)
+  if (url.indexOf("/robots.txt") == -1) url = `${url}/robots.txt`
+  url = urlparse.parse(url)
   if (!url) return null
   try {
     const robotstxt = await http.get(url)
@@ -18,5 +18,5 @@ const get = async (url) => {
 }
 
 module.exports = {
-  get: get
+  get
 }

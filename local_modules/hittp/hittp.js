@@ -4,9 +4,8 @@ const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
-const config = require("../config")
 
-cache.setPath(config.cachepath || "./.cache")
+cache.setPath("./.cache")
 let queue = []
 const reqoptions = {
   timeout: 5

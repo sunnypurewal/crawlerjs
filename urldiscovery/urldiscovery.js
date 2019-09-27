@@ -21,5 +21,5 @@ const fromJSON = async (filename) => {
 }
 
 module.exports = {
-  fromJSON: fromJSON
+  fromJSON
 }
