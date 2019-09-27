@@ -3,7 +3,7 @@
 const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
-const GetHandler = require("./handlers").GetHandler
+const urlparse = require("./urlparse")
 const config = require("../config")
 
 cache.setPath(config.cachepath || "./.cache")
@@ -15,7 +15,7 @@ const reqoptions = {
 const processQ = async () => {
   if (queue.length > 0) {
     const params = queue.shift()
-    console.log("Picking url off queue", params.url.href)
+    console.log("Picking url off queue", params.url.href, queue.length)
     get(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
   }
 }
@@ -25,6 +25,7 @@ const get = async (url, promise=null, redirCount=0) => {
     const cached = await cache.get(url)
     if (cached) {
       console.log("http.cached")
+      processQ()
       if (promise) {
         promise.resolve(cached)
         return
@@ -68,11 +69,15 @@ const get = async (url, promise=null, redirCount=0) => {
           reject(err)
           processQ()
         })
+        res.on("aborted", () => {
+          reject(new HTTPError("Response Aborted"))
+          processQ()
+        })
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
           console.log("Redirecting to ", location)
-          queue.push({"url":new URL(location), resolve, reject, redirCount: redirCount + 1})
+          queue.push({"url":urlparse.parse(location), resolve, reject, redirCount: redirCount + 1})
           processQ()
           return
         }
@@ -81,12 +86,16 @@ const get = async (url, promise=null, redirCount=0) => {
         processQ()
       }
     })
+    req.on("abort", () => {
+      processQ()
+    })
     req.on("timeout", () => {
       req.abort()
       reject(new HTTPError("Timeout"))
     })
     req.on("error", (err) => {
       reject(err)
+      processQ()
     })
     req.end()
   })

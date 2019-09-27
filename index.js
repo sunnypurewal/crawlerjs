@@ -24,9 +24,9 @@ const getRobots = async () => {
 // (async () => {
   let domains = await getStartURLs()
   const bots = []
-  const random = Math.floor(Math.random() * domains.length-1)
-  domains = domains.slice(random, random+20)
-  // domains = ["ny1.com"]
+  // const random = Math.floor(Math.random() * domains.length-1)
+  // domains = domains.slice(random, random+200)
+  // domains = ["opensecrets.org"]
   console.log(`Fetching robots for ${domains.length} domains`)
   let i = 0
   for (const domain of domains) {
@@ -38,7 +38,7 @@ const getRobots = async () => {
       console.log(i)
     })
   }
-  while (i < domains.length) await sleep(1000)
+  while (i < domains.length) await sleep(500)
   return bots
 }
 const sleep = (milliseconds) => {

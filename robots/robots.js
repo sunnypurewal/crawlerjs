@@ -3,7 +3,7 @@ const config = require("../config")
 const http = require("../http/http")
 const robotsparser = require("./robotsparser")
 const url = require("url")
-const urlparse = require("../http/urlparser")
+const urlparse = require("../http/urlparse")
 
 const get = async (url) => {
   url = urlparse.parse(`${url}/robots.txt`)
