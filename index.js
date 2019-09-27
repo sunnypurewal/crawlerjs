@@ -2,43 +2,27 @@
 const jsonfile = require("jsonfile")
 const urllib = require("url")
 const robots = require("./robots/robots")
-
-const getStartURLs = async (filename="domains.json") => {
-  try {
-    const obj = await jsonfile.readFile(filename)
-    const domains = []
-    const categories = Object.keys(obj)
-    for (const cat of categories) {
-      const urlList = obj[cat]
-      for (const u of urlList) {
-        domains.push(u)
-      }
-    }
-    return domains
-  } catch (error) {
-    return []
-  }
-}
+const discovery = require("./urldiscovery/urldiscovery")
 
 const getRobots = async () => {
 // (async () => {
-  let domains = await getStartURLs()
+  let domains = await discovery.fromJSON("./.data/domains.json")
   const bots = []
   // const random = Math.floor(Math.random() * domains.length-1)
   // domains = domains.slice(random, random+200)
   // domains = ["opensecrets.org"]
   console.log(`Fetching robots for ${domains.length} domains`)
-  let i = 0
-  for (const domain of domains) {
-    robots.get(domain).then(robot => {
-      if (robot != null) {
-        bots.push(robot)
-      }
-      i++
-      console.log(i)
-    })
-  }
-  while (i < domains.length) await sleep(500)
+  // let i = 0
+  // for (const domain of domains) {
+  //   robots.get(domain).then(robot => {
+  //     if (robot != null) {
+  //       bots.push(robot)
+  //     }
+  //     i++
+  //     console.log(i)
+  //   })
+  // }
+  // while (i < domains.length) await sleep(500)
   return bots
 }
 const sleep = (milliseconds) => {
