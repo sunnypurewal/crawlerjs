@@ -1,6 +1,7 @@
 'use strict'
 
+const http = require("./hittp")
 module.exports = {
-  hittp: require("./hittp"),
+  get: http.get,
   str2url: require("./urlparse").parse
 }

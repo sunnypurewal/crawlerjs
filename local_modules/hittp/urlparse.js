@@ -3,7 +3,6 @@
 const url = require("url")
 
 const parse = (string) => {
-  console.log("Parsing", string)
   let protocol = "http"
   let protIndex = string.indexOf("://")
   if (protIndex == -1) {
