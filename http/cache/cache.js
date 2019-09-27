@@ -22,7 +22,6 @@ const setPath = async (path) => {
 }
 
 const get = async (url) => {
-  console.log("GETTING CACHE ", url)
   if (!CACHE_PATH) return new CacheError("must call cache.setPath first")
   const folderhash = crypto.createHash("sha256")
   folderhash.update(url.origin)
@@ -34,9 +33,8 @@ const get = async (url) => {
   const filepath = path.join(CACHE_PATH, folderkey, key)
   const response = await fs.readFile(filepath, {encoding: "utf8"})
   if (!response) {
-    return new CacheError("Missed Cache")
+    throw new CacheError("Missed Cache")
   } else {
-    console.log("Found item in cache")
     return response
   }
 }
@@ -53,9 +51,7 @@ const set = async (url, response) => {
   const folderpath = path.join(CACHE_PATH, folderkey)
   fs.mkdir(folderpath, fsoptions)
   const filepath = path.join(folderpath, key)
-  console.log("Writing new item to cache", Date.now())
   await fs.writeFile(filepath, response)
-  console.log("Wrote new item into cache", Date.now())
 }
 
 module.exports = {

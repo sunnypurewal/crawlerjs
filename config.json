@@ -1,3 +1,4 @@
 {
-  "useragent": "ElectionSearchBot (http://electionsearch.ca)"
+  "useragent": "ElectionSearchBot (http://electionsearch.ca)",
+  "cachepath": "./.cache"
 }

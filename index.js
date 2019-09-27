@@ -3,9 +3,9 @@ const jsonfile = require("jsonfile")
 const urllib = require("url")
 const robots = require("./robots/robots")
 
-const start = (callback, filename="domains.json") => {
-  jsonfile.readFile(filename, (err, obj) => {
-    if (err) console.log(err)
+const getStartURLs = async (filename="domains.json") => {
+  try {
+    const obj = await jsonfile.readFile(filename)
     const domains = []
     const categories = Object.keys(obj)
     for (const cat of categories) {
@@ -14,19 +14,28 @@ const start = (callback, filename="domains.json") => {
         domains.push(u)
       }
     }
-    callback(domains)
-  })
+    console.log("getStartURLs returned", domains.length)
+    return domains
+  } catch (error) {
+    return []
+  }
 }
 
-start((domains) => {
+const getRobots = async () => {
+  let domains = await getStartURLs()
   const random = Math.floor(Math.random() * domains.length-1)
-  domains = [domains[random]]
-  domains = [new URL("https://fosters.com/")]
+  domains = domains.slice(random, random+15)
+  domains = [new URL("https://www.centredaily.com/")]
   for (const domain of domains) {
-    robots.get(domain, (robots/*: RobotsTxt */) => {
-      if (robots) {
-        console.log(robots)
-      }
-    })
+    console.log(domain)
+    const robot = await robots.get(domain)
+    if (robot !== null) {
+      console.log(robot.toString)
+    }
   }
+  console.log("Returning from get robots")
+}
+
+getRobots().then(() => {
+  console.log("GOT")
 })

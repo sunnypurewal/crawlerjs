@@ -4,12 +4,21 @@ const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
 const GetHandler = require("./handlers").GetHandler
+const config = require("../config")
 
+cache.setPath(config.cachepath || "./.cache")
 const reqoptions = {
   timeout: 5
 }
 
 const get = async (url, redirCount=0, promise) => {
+  try {
+    const cached = await cache.get(url)
+    if (cached) {
+      console.log("http.cached")
+      return cached
+    }
+  } catch (error) {}
   if (redirCount > 10) {
     promise.reject(new HTTPError("Too many redirects"))
     return
@@ -19,7 +28,7 @@ const get = async (url, redirCount=0, promise) => {
       resolve = promise.resolve 
       reject = promise.reject
     }
-    const h = url.protocol === "https:" ? https : http
+    const h = url.protocol.indexOf("https") != -1 ? https : http
     console.log("http.get ", url.href)
     const options = {host:url.host, path:url.pathname}
     h.get(options, (res) => {
@@ -27,6 +36,7 @@ const get = async (url, redirCount=0, promise) => {
       if (res.statusCode >= 200 && res.statusCode <= 299) {
         const data = []
         res.on("data", (chunk) => {
+          console.log("Data")
           data.push(chunk)
         })
         res.on("end", () => {

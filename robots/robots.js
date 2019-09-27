@@ -14,17 +14,11 @@ const fetchoptions = {
 }
 
 const get = async (url) => {
-  // if (!url) return null
-  // if (url.pathname != "robots.txt") {
-  //   url.pathname = "robots.txt"
-  // }
-  let robotstxt = null
-  // try {
-    // robotstxt = await cache.get(url)
-  // } catch (error) {
   url = urlparse.parse(`${url}/robots.txt`)
-  robotstxt = await http.get(url)
-  // }
+  console.log(url)
+  if (!url) return null
+  const robotstxt = await http.get(url)
+  console.log("fetched robots.txt ", robotstxt)
   const robots = robotsparser.parse(robotstxt, url)
   return robots
 }
