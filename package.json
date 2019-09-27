@@ -14,7 +14,6 @@
     "jsonfile": "^5.0.0",
     "node-fetch": "^2.6.0",
     "sitemap-stream-parser": "^1.7.0",
-    "url-parse": "^1.4.7",
     "winston": "^3.2.1"
   },
   "devDependencies": {

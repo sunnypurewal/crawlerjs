@@ -3,7 +3,6 @@
 const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
-const helpers = require("./helpers")
 const GetHandler = require("./handlers").GetHandler
 
 const reqoptions = {
@@ -16,32 +15,39 @@ const get = async (url, redirCount=0, promise) => {
     return
   }
   return new Promise((resolve, reject) => {
-    url = helpers.validateURL(url)
-    if (!url) {
-      (promise.reject || reject)(new HTTPError("Invalid URL"))
-      console.log("Invalid URL")
-      return
+    if (promise) {
+      resolve = promise.resolve 
+      reject = promise.reject
     }
     const h = url.protocol === "https:" ? https : http
-    h.get(url, reqoptions, (res) => {
-      if (res.statusCode === 301) {
-        const location = res.headers.location
-        if (location) {
-          get(new URL(location), redirCount + 1, {resolve, reject})
-          return
-        }
-      } else if (res.ok) {
+    console.log("http.get ", url.href)
+    const options = {host:url.host, path:url.pathname}
+    h.get(options, (res) => {
+      console.log(res.statusCode, url.href)
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
         const data = []
         res.on("data", (chunk) => {
           data.push(chunk)
         })
         res.on("end", () => {
-          const buffer = Buffer.concat(data)
-          const utf8str = buffer.toString()
+          const utf8str = Buffer.concat(data).toString()
           cache.set(url, utf8str)
-          console.log(res.statusCode, url.href)
-          (promise.resolve || resolve)(utf8str)
+          resolve(utf8str)
         })
+        res.on("error", (err) => {
+          console.log("http error")
+          console.error(err)
+        })
+      } else if (res.statusCode >= 300 && res.statusCode <= 399) {
+        const location = res.headers.location
+        if (location) {
+          console.log("Redirecting to ", location)
+          get(new URL(location), redirCount + 1, {resolve, reject})
+          return
+        }
+      } else {
+        console.error("HTTP Error ", res.statusCode)
+        //404?
       }
     })
   })

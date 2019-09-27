@@ -42,7 +42,7 @@ const parseUserAgent = (lines, startIndex, robots) => {
   let i = startIndex
   for (; i < lines.length; i++) {
     const line = lines[i]
-    if (line.length == 0) break
+    if (line.trim().length == 0) break
     if (line.startsWith("#")) continue
     const kv = getKeyVal(line)
     const key = kv.key

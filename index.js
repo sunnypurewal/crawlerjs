@@ -19,18 +19,13 @@ const start = (callback, filename="domains.json") => {
 }
 
 start((domains) => {
-  let i = Math.floor(Math.random() * domains.length-1)
-  const random = []
-  for (let j = 0; j < 1; j++) {
-    random.push(domains[i])
-    i = Math.floor(Math.random() * domains.length-1)
-  }
-  console.log(`Fetching robots for ${random.length} domains`)
-  for (const domain of random) {
-  // domains = [new URL("https://www.miamiherald.com/robots.txt")]
-  // for (const domain of domains) {
+  const random = Math.floor(Math.random() * domains.length-1)
+  domains = [domains[random]]
+  domains = [new URL("https://fosters.com/")]
+  for (const domain of domains) {
     robots.get(domain, (robots/*: RobotsTxt */) => {
       if (robots) {
+        console.log(robots)
       }
     })
   }
