@@ -15,7 +15,6 @@ const fetchoptions = {
 
 const get = async (url) => {
   url = urlparse.parse(`${url}/robots.txt`)
-  console.log(url)
   if (!url) return null
   const robotstxt = await http.get(url)
   console.log("fetched robots.txt ", robotstxt)

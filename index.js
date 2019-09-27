@@ -25,7 +25,7 @@ const getRobots = async () => {
   let domains = await getStartURLs()
   const random = Math.floor(Math.random() * domains.length-1)
   domains = domains.slice(random, random+15)
-  domains = [new URL("https://www.centredaily.com/")]
+  domains = [new URL("http://centredaily.com")]
   for (const domain of domains) {
     console.log(domain)
     const robot = await robots.get(domain)

@@ -30,8 +30,8 @@ const get = async (url, redirCount=0, promise) => {
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
     console.log("http.get ", url.href)
-    const options = {host:url.host, path:url.pathname}
-    h.get(options, (res) => {
+    const options = {host:url.host, path:url.pathname, timeout: 3000}
+    const req = h.request(options, (res) => {
       console.log(res.statusCode, url.href)
       if (res.statusCode >= 200 && res.statusCode <= 299) {
         const data = []
@@ -40,12 +40,13 @@ const get = async (url, redirCount=0, promise) => {
           data.push(chunk)
         })
         res.on("end", () => {
+          console.log("end")
           const utf8str = Buffer.concat(data).toString()
           cache.set(url, utf8str)
           resolve(utf8str)
         })
         res.on("error", (err) => {
-          console.log("http error")
+          console.log("http response error")
           console.error(err)
         })
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
@@ -60,6 +61,15 @@ const get = async (url, redirCount=0, promise) => {
         //404?
       }
     })
+    req.on("timeout", () => {
+      console.log("timeout")
+      req.abort()
+    })
+    req.on("error", (err) => {
+      console.log("http request error")
+      console.error(err)
+    })
+    req.end()
   })
 }
 

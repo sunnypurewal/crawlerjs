@@ -7,6 +7,7 @@ class RobotsTxt {
     this.disallows = []
     this.sitemaps = []
     this.url = url
+    this.crawlDelay = 3
   }
   toString() {
     return `${this.url}
@@ -33,6 +34,8 @@ const parse = (robotstxt/*: string */, baseURL) => {
       }
     } else if (key === "sitemap") {
       robots.sitemaps.push(val)
+    } else if (key === "crawl-delay") {
+      robots.crawlDelay = val
     }
   }
   return robots
