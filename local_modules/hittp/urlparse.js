@@ -21,6 +21,12 @@ const parse = (string) => {
     pathIndex--
   }
   let host = string.slice(hostIndex, pathIndex)
+  // if (host.startsWith("www")) {
+  //   host = host.split(".").slice(1).join(".")
+  // }
+  if (!host.startsWith("www")) {
+    host = `www.${host}`
+  }
   let path = string.slice(pathIndex)
   if (path[1] === "/") {
     path = path.slice(1)

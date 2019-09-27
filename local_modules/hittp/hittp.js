@@ -6,17 +6,30 @@ const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
 
 cache.setPath("./.cache")
-let queue = []
-const reqoptions = {
-  timeout: 5
-}
+const queue = []
+const MAX_CONNECTIONS = 20
+const DOMAIN_DELAY = 3
+const lasthit = new Map()
 
 const processQ = async () => {
   if (queue.length > 0) {
     const params = queue.shift()
-    console.log("Picking url off queue", params.url.href, queue.length)
-    get(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
+    const now = Date.now()
+    const hit = lasthit.get(params.url.host)
+    if (Date.now() - hit < DOMAIN_DELAY) {
+      console.log("Delaying domain", params.url.host)
+      queue.push(params)
+      processQ()
+    } else {
+      console.log("Picking url off queue", params.url.href, queue.length)
+      get(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
+    }
   }
+}
+
+const pushQ = async (obj) => {
+  queue.push(obj)
+  processQ()
 }
 
 const get = async (url, promise=null, redirCount=0) => {
@@ -32,6 +45,7 @@ const get = async (url, promise=null, redirCount=0) => {
     }
   } catch (error) {}
   if (redirCount > 10) {
+    processQ()
     promise.reject(new HTTPError("Too many redirects"))
     return
   }
@@ -41,9 +55,9 @@ const get = async (url, promise=null, redirCount=0) => {
       reject = promise.reject
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
-    if (Object.keys(h.globalAgent.sockets).length >= 5) {
+    if (Object.keys(h.globalAgent.sockets).length >= MAX_CONNECTIONS) {
       console.log("Too many sockets, queueing", url.href)
-      queue.push({url,resolve,reject})
+      queue.push({url, resolve, reject})
       return
     }
     console.log("http.get ", url.href)
@@ -51,6 +65,7 @@ const get = async (url, promise=null, redirCount=0) => {
     const req = h.request(options, (res) => {
       console.log(res.statusCode, url.href)
       if (res.statusCode >= 200 && res.statusCode <= 299) {
+        lasthit.set(options.host, Date.now())
         const data = []
         res.on("data", (chunk) => {
           data.push(chunk)
@@ -76,11 +91,15 @@ const get = async (url, promise=null, redirCount=0) => {
         const location = res.headers.location
         if (location) {
           console.log("Redirecting to ", location)
-          queue.push({"url":urlparse.parse(location), resolve, reject, redirCount: redirCount + 1})
-          processQ()
+          pushQ({
+            url: urlparse.parse(location),
+            resolve, reject,
+            redirCount: redirCount + 1
+          })
           return
         }
       } else {
+        lasthit.set(options.host, Date.now())
         reject(new HTTPError(res.statusMessage))
         processQ()
       }

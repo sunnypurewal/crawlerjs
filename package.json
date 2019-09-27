@@ -11,14 +11,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/xmldom": "^0.1.29",
+    "hittp": "file:local_modules/hittp",
     "jsonfile": "^5.0.0",
-    "redis": "^2.8.0",
-    "sitemap-stream-parser": "^1.7.0",
     "robotsdottxt": "file:local_modules/robotsdottxt",
-    "hittp": "file:local_modules/hittp"
+    "xmldom": "^0.1.27",
+    "xpath.js": "^1.1.0"
   },
   "devDependencies": {
-    "@types/redis": "^2.8.14",
+    "@types/jsdom": "^12.2.4",
+    "@types/node": "^12.7.8",
     "nodemon": "^1.19.2"
   }
 }
