@@ -39,49 +39,31 @@ const main = async () => {
   const sitemap = await http.get(url)
   const root = new DOMParser().parseFromString(sitemap).documentElement
   const allurls = []
+  const allsitemaps = []
   const children = root.childNodes
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
     if (child.nodeName === "url" || child.nodeName === "sitemap") {
+      let loc = null, lastmod = null
       for (let j = 0; j < child.childNodes.length; j++) {
         const c = child.childNodes[j];
         if (c.nodeName === "loc") {
-          console.log("loc", c.textContent)
+          loc = c.textContent
         } else if (c.nodeName === "lastmod") {
-          console.log("lastmod", c.textContent)
-        } 
+          lastmod = c.textContent
+        }
+      }
+      if (loc) {
+        if (child.nodeName === "sitemap") {
+          allsitemaps.push({loc, lastmod})
+        } else {
+          allurls.push({loc, lastmod})
+        }
       }
     }
   }
-  // const sitemaps = xpath.select("//sitemap", root)
-  // const urlset = xpath.select("//url", root)
-  // console.log(sitemaps, urlset)
-  // if (root.nodeName === "sitemapindex") {
-  //   const sitemaps = root.childNodes
-  //   for (let i = 0; i < sitemaps.length; i++) {
-  //     const element = sitemaps[i];
-  //     if (element.nodeName === "sitemap") {
-  //       console.log("sitemap")
-  //       for (let j = 0; j < element.childNodes.length; j++) {
-  //         const e = element.childNodes[j];
-  //         console.log(e.nodeName, e.textContent) 
-  //       }
-  //     }
-  //   }
-  //   console.log(`Index with ${sitemaps.length} sitemaps`)
-  // } else if (root.nodeName === "urlset") {
-  //   const urls = root.childNodes
-  //   for (let i = 0; i < urls.length; i++) {
-  //     const element = urls[i];
-  //     if (element.nodeName === "url") {
-  //       console.log("url")
-  //       const loc = element.removeChild("loc")
-  //       const lastmod = element.removeChild("lastmod")
-  //       console.log(loc, lastmod)
-  //     }
-  //   }
-  //   console.log(`URL set with ${urls.length} URLs`)
-  // }
+
+  console.log(allurls, allsitemaps)
 }
 
 main()
