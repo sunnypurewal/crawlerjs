@@ -14,28 +14,40 @@ const getStartURLs = async (filename="domains.json") => {
         domains.push(u)
       }
     }
-    console.log("getStartURLs returned", domains.length)
     return domains
   } catch (error) {
     return []
   }
 }
 
-const getRobots = async () => {
-  let domains = await getStartURLs()
-  const random = Math.floor(Math.random() * domains.length-1)
-  domains = domains.slice(random, random+15)
-  domains = [new URL("http://centredaily.com")]
-  for (const domain of domains) {
-    console.log(domain)
+const getRobot = async (domain) => {
+  // let domains = await getStartURLs()
+  // domains = domains.slice()
+  // const random = Math.floor(Math.random() * domains.length-1)
+  // domains = domains.slice(random, random+15)
+  // domains = [new URL("https://www.fresnobee.com/")]
+  try {
     const robot = await robots.get(domain)
-    if (robot !== null) {
-      console.log(robot.toString)
-    }
+    return robot
+  } catch (error) {
+    throw error
   }
-  console.log("Returning from get robots")
 }
 
-getRobots().then(() => {
-  console.log("GOT")
+getStartURLs().then((domains) => {
+  console.log(`Got ${domains.length} domains`)
+  const bots = []
+  for (const domain of domains) {
+    getRobot(domain).then((robot) => {
+      bots.push(robot)
+    }).catch((err) => {
+      console.error(err)
+    })
+  }
+
+  // getRobots(domains).then((robots) => {
+  //   console.log(`Got ${robots.length} robots.txt from ${domains.length} domains`)
+  // }).catch((err) => {
+  //   console.error("Main errored out")
+  // })
 })

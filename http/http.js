@@ -36,18 +36,18 @@ const get = async (url, redirCount=0, promise) => {
       if (res.statusCode >= 200 && res.statusCode <= 299) {
         const data = []
         res.on("data", (chunk) => {
-          console.log("Data")
           data.push(chunk)
         })
         res.on("end", () => {
-          console.log("end")
           const utf8str = Buffer.concat(data).toString()
-          cache.set(url, utf8str)
-          resolve(utf8str)
+          cache.set(url, utf8str).then(() => {
+            resolve(utf8str)
+          }).catch((err) => {
+            reject(err)
+          })
         })
         res.on("error", (err) => {
-          console.log("http response error")
-          console.error(err)
+          reject(err)
         })
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
@@ -57,17 +57,15 @@ const get = async (url, redirCount=0, promise) => {
           return
         }
       } else {
-        console.error("HTTP Error ", res.statusCode)
-        //404?
+        reject(new HTTPError(res.statusMessage))
       }
     })
     req.on("timeout", () => {
-      console.log("timeout")
       req.abort()
+      reject(new HTTPError("Timeout"))
     })
     req.on("error", (err) => {
-      console.log("http request error")
-      console.error(err)
+      reject(err)
     })
     req.end()
   })

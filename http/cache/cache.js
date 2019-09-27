@@ -22,7 +22,7 @@ const setPath = async (path) => {
 }
 
 const get = async (url) => {
-  if (!CACHE_PATH) return new CacheError("must call cache.setPath first")
+  if (!CACHE_PATH) throw new CacheError("must call cache.setPath first")
   const folderhash = crypto.createHash("sha256")
   folderhash.update(url.origin)
   const folderkey = folderhash.digest("hex")
@@ -31,16 +31,16 @@ const get = async (url) => {
   const key = hash.digest("hex")
 
   const filepath = path.join(CACHE_PATH, folderkey, key)
-  const response = await fs.readFile(filepath, {encoding: "utf8"})
-  if (!response) {
-    throw new CacheError("Missed Cache")
-  } else {
+  try {
+    const response = await fs.readFile(filepath, {encoding: "utf8"})
     return response
+  } catch (error) {
+    throw new CacheError("Missed Cache")
   }
 }
 
 const set = async (url, response) => {
-  if (!CACHE_PATH) return new CacheError("must call cache.setPath first")
+  if (!CACHE_PATH) throw new CacheError("must call cache.setPath first")
   const folderhash = crypto.createHash("sha256")
   folderhash.update(url.origin)
   const folderkey = folderhash.digest("hex")
@@ -51,7 +51,11 @@ const set = async (url, response) => {
   const folderpath = path.join(CACHE_PATH, folderkey)
   fs.mkdir(folderpath, fsoptions)
   const filepath = path.join(folderpath, key)
-  await fs.writeFile(filepath, response)
+  try {
+    await fs.writeFile(filepath, response)
+  } catch (error) {
+    throw error
+  }
 }
 
 module.exports = {
