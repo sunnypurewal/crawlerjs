@@ -21,7 +21,6 @@ class RobotsTxt {
 const parse = (robotstxt/*: string */, baseURL) => {
   const robots = new RobotsTxt(baseURL)
   const lines = robotstxt.split("\n")
-  console.log("Parsing lines", lines.length)
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i]
     const kv = getKeyVal(line)

@@ -10,11 +10,10 @@ const get = async (url) => {
   if (!url) return null
   try {
     const robotstxt = await http.get(url)
-    console.log("fetched robots.txt ", robotstxt)
     const robots = robotsparser.parse(robotstxt, url)
     return robots
   } catch (error) {
-    throw error
+    return null
   }
 }
 
