@@ -33,8 +33,6 @@ const parse = (robotstxt/*: string */, baseURL) => {
       }
     } else if (key === "sitemap") {
       robots.sitemaps.push(val)
-    } else if (key === "crawl-delay") {
-      robots.crawlDelay = val
     }
   }
   return robots
@@ -53,6 +51,8 @@ const parseUserAgent = (lines, startIndex, robots) => {
       robots.allows.push(val)
     } else if (key === "disallow") {
       robots.disallows.push(val)
+    } else if (key === "crawl-delay") {
+      robots.crawlDelay = val
     }
   }
   return i + 1

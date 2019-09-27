@@ -35,7 +35,7 @@ const get = async (url) => {
     const response = await fs.readFile(filepath, {encoding: "utf8"})
     return response
   } catch (error) {
-    throw new CacheError("Missed Cache")
+    return null
   }
 }
 
@@ -53,9 +53,7 @@ const set = async (url, response) => {
   const filepath = path.join(folderpath, key)
   try {
     await fs.writeFile(filepath, response)
-  } catch (error) {
-    throw error
-  }
+  } catch (error) {}
 }
 
 module.exports = {

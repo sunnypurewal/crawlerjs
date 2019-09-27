@@ -15,8 +15,8 @@ const reqoptions = {
 const processQ = async () => {
   if (queue.length > 0) {
     const params = queue.shift()
-    console.log("Picking url off queue", params.url)
-    get(params.url, {resolve:params.resolve,reject:params.reject})
+    console.log("Picking url off queue", params.url.href)
+    get(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
   }
 }
 
@@ -25,8 +25,10 @@ const get = async (url, promise=null, redirCount=0) => {
     const cached = await cache.get(url)
     if (cached) {
       console.log("http.cached")
-      if (promise) promise.resolve(cached)
-      else return cached
+      if (promise) {
+        promise.resolve(cached)
+        return
+      } else return cached
     }
   } catch (error) {}
   if (redirCount > 10) {
@@ -39,11 +41,12 @@ const get = async (url, promise=null, redirCount=0) => {
       reject = promise.reject
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
-    // if (Object.keys(h.globalAgent.sockets).length >= 5) {
-    //   queue.push({url,resolve,reject})
-    //   return
-    // }
-    console.log("http.get ", url.href, redirCount>0?`${redirCount} Redirects`:"")
+    if (Object.keys(h.globalAgent.sockets).length >= 5) {
+      console.log("Too many sockets, queueing", url.href)
+      queue.push({url,resolve,reject})
+      return
+    }
+    console.log("http.get ", url.href)
     const options = {host:url.host, path:url.pathname, timeout: 3000}
     const req = h.request(options, (res) => {
       console.log(res.statusCode, url.href)
@@ -69,7 +72,8 @@ const get = async (url, promise=null, redirCount=0) => {
         const location = res.headers.location
         if (location) {
           console.log("Redirecting to ", location)
-          get(new URL(location), {resolve, reject}, redirCount + 1)
+          queue.push({"url":new URL(location), resolve, reject, redirCount: redirCount + 1})
+          processQ()
           return
         }
       } else {
