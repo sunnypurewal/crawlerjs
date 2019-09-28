@@ -46,7 +46,7 @@ const stream = async (url) => {
       //   return
       // } else return cached
     }
-  } catch (error) {}
+  } catch (error) { console.error(error) }
   return new Promise((resolve, reject) => {
     const h = url.protocol.indexOf("https") != -1 ? https : http
     console.log("http.stream ", url.href)

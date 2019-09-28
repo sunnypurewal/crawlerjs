@@ -27,8 +27,11 @@ class CacheStream extends stream.Duplex {
   }
 
   _read = (size) => {
-    console.log("Reading from cachestream", this.queue.length)
-    this.push(this.queue.shift())
+    let chunk = this.queue.shift()
+    while (this.push(chunk) && this.queue.length > 0) {
+      console.log("Reading from cachestream", this.queue.length)
+      chunk = this.queue.shift()
+    }
   }
 
   _writev = (chunks, callback) => {

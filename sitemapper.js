@@ -44,6 +44,10 @@ const get = async (url) => {
   saxstream.on("pipe", () => {
     console.log("Saxstream piped")
   })
+
+  saxstream.on("data", (chunk) => {
+    console.log("saxstream data")
+  })
   
   const response = await http.stream(url)
   response.pipe(saxstream)

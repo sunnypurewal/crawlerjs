@@ -28,14 +28,15 @@ const get = async (url) => {
 }
 
 const getstream = async (url) => {
-  const filepath = cachepath.getCachePath(url)
-  const stream = fs.createReadStream(filepath)
-  stream.on("ready", () => {
-    return stream
-  })
-  stream.on("error", (err) => {
-    console.error(err)
-    return null
+  return new Promise((resolve, reject) => {
+    const filepath = cachepath.getReadablePath(url)
+    const stream = fs.createReadStream(filepath)
+    stream.on("ready", () => {
+      resolve(stream)
+    })
+    stream.on("error", (err) => {
+      reject(err)
+    })
   })
 }
 

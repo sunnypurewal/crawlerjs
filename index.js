@@ -17,7 +17,7 @@ const main = async () => {
   // const random = Math.floor(Math.random() * robots.length-1)
   // robots = robots.slice(random, random+50)
   // const urls = ["https://www.courierpress.com/news-sitemap.xml"]
-  const urls = []
+  let urls = []
   for (let i = 0; i < robots.length; i++) {
     const robot = robots[i]
     const roboturl = http.str2url(robot.url)
@@ -33,7 +33,8 @@ const main = async () => {
   }
 
   const random = Math.floor(Math.random() * urls.length-1)
-  const url = http.str2url(urls[random])
+  // const url = http.str2url(urls[random])
+  const url = http.str2url("http://www.tuscaloosanews.com/section/google-zz-sitemap-index")
   console.log(url.href)
   const sitemap = await sitemapper.get(url)
   // console.log(sitemap)
