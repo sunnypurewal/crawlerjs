@@ -16,6 +16,7 @@ const main = async () => {
   let robots = await jsonfile.readFile("./data/robots.json")
   // const random = Math.floor(Math.random() * robots.length-1)
   // robots = robots.slice(random, random+50)
+  // const urls = ["https://www.courierpress.com/news-sitemap.xml"]
   const urls = []
   for (let i = 0; i < robots.length; i++) {
     const robot = robots[i]
@@ -35,6 +36,7 @@ const main = async () => {
   const url = http.str2url(urls[random])
   console.log(url.href)
   const sitemap = await sitemapper.get(url)
+  // console.log(sitemap)
   // console.log(sitemap.urls)
 }
 

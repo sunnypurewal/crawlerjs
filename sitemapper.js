@@ -5,7 +5,6 @@ const sax = require("sax"),
   strict = true // set to false for html-mode
 
 const get = async (url) => {
-
   const saxstream = sax.createStream()
   const urls = []
   const sitemaps = []
@@ -36,13 +35,23 @@ const get = async (url) => {
       } else if (name === "SITEMAP") {
         sitemaps.push({loc,lastmod})
         text = null
+      } else if (name === "SITEMAPINDEX" || name === "URLSET") {
+        console.log(urls,sitemaps)
+        return {urls, sitemaps}
       }
     }
   })
-  await http.get(url, saxstream)
-  console.log(urls, sitemaps)
+  saxstream.on("pipe", () => {
+    console.log("Saxstream piped")
+  })
+  
+  const response = await http.stream(url)
+  response.pipe(saxstream)
 }
 
+const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 module.exports = {
   get
 }

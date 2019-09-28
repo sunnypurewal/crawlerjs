@@ -4,6 +4,8 @@ const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
+const CacheStream = require("./cache/cachestream").CacheStream
+const PassThrough = require("stream").PassThrough
 
 cache.setPath("./.cache")
 const queue = []
@@ -30,6 +32,44 @@ const processQ = async () => {
 const pushQ = async (obj) => {
   queue.push(obj)
   processQ()
+}
+
+const stream = async (url) => {
+  try {
+    const cached = await cache.getstream(url)
+    if (cached) {
+      console.log("http.stream.cached")
+      return cached
+      // processQ()
+      // if (promise) {
+      //   promise.resolve(cached)
+      //   return
+      // } else return cached
+    }
+  } catch (error) {}
+  return new Promise((resolve, reject) => {
+    const h = url.protocol.indexOf("https") != -1 ? https : http
+    console.log("http.stream ", url.href)
+    const options = {host:url.host, path:url.pathname}
+    const cachestream = new CacheStream(url)
+    // const cachestream = new PassThrough()
+    const req = h.request(options, (response) => {
+      console.log("STREAM RESPONSE")
+      resolve(response.pipe(cachestream))
+    })
+    req.on("abort", () => {
+      processQ()
+    })
+    req.on("timeout", () => {
+      req.abort()
+      reject(new HTTPError("Timeout"))
+    })
+    req.on("error", (err) => {
+      reject(err)
+      processQ()
+    })
+    req.end()
+  })
 }
 
 const get = async (url, promise=null, redirCount=0) => {
@@ -128,5 +168,6 @@ class HTTPError extends Error {
 }
 
 module.exports = {
-  get: get
+  get,
+  stream
 }

@@ -17,9 +17,7 @@
     "sax": "^1.2.4"
   },
   "devDependencies": {
-    "@types/jsdom": "^12.2.4",
     "@types/node": "^12.7.8",
-    "@types/xmldom": "^0.1.29",
     "nodemon": "^1.19.2"
   }
 }
