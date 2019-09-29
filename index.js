@@ -32,15 +32,15 @@ const main = async () => {
   }
   
   const random = Math.floor(Math.random() * urls.length-1)
-  // const url = http.str2url(urls[random])
-  const url = http.str2url("https://www.economist.com/sitemap.xml")
+  const url = http.str2url(urls[random])
+  // const url = http.str2url("https://www.economist.com/sitemap.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
   try {
-    const sitemapurls = await sitemapper.getRecursive(url)
+    const sitemapurls = await sitemapper.get(url)
     console.log(`Got ${sitemapurls.length} URLs from sitemap`)
   } catch (err) {
     console.error("index.js", err)

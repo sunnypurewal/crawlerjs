@@ -5,37 +5,37 @@ const sax = require("sax"),
   strict = true
 const moment = require("moment")
 
-const getRecursive = async (url) => {
+const get = async (url) => {
   if (url.pathname.endsWith(".gz")) {
     console.log("gz")
     url.pathname = url.pathname.slice(0, -3)
   }
-  const sitemap = await get(url)
-  if (sitemap.sitemaps && sitemap.sitemaps.length) {
-    const urls = []
-    let j = 0
-    for (const mapurl of sitemap.sitemaps) {
-      const urlset = await getRecursive(http.str2url(mapurl))
-      urls.push(...urlset)
-      j++
-      if (j === sitemap.sitemaps.length) {
-        return urls
-      }
-    }
-  } else {
-    console.log(sitemap)
-    console.log("Got recursive URLS", sitemap.urls.length)
-    return sitemap.urls
-  }
+  // const sitemap = await get(url)
+  // if (sitemap.sitemaps && sitemap.sitemaps.length) {
+  //   const urls = []
+  //   let j = 0
+  //   for (const mapurl of sitemap.sitemaps) {
+  //     const urlset = await getRecursive(http.str2url(mapurl))
+  //     urls.push(...urlset)
+  //     j++
+  //     if (j === sitemap.sitemaps.length) {
+  //       return urls
+  //     }
+  //   }
+  // } else {
+  //   console.log(sitemap)
+  //   console.log("Got recursive URLS", sitemap.urls.length)
+  //   return sitemap.urls
+  // }
   return new Promise((resolve, reject) => {
     console.log("recursive", url.href)
-    get(url).then((sitemap) => {
+    _get(url).then((sitemap) => {
       if (sitemap.sitemaps) {
         const urls = []
         let j = 0
         // console.log("Got INDEX", sitemap.sitemaps.length)
         for (const mapurl of sitemap.sitemaps) {
-          getRecursive(http.str2url(mapurl)).then((urlset) => {
+          get(http.str2url(mapurl)).then((urlset) => {
             urls.push(...urlset)
             j++
             if (j === sitemap.sitemaps.length) {
@@ -56,7 +56,7 @@ const getRecursive = async (url) => {
   })
 }
 
-const get = async (url) => {
+const _get = async (url) => {
   return new Promise((resolve, reject) => {
     const urls = []
     const sitemaps = []
@@ -121,6 +121,5 @@ const sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 module.exports = {
-  get,
-  getRecursive
+  get
 }
