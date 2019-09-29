@@ -35,6 +35,7 @@ const pushQ = async (obj) => {
 }
 
 const stream = async (url) => {
+  if (typeof(url) === "string") url = urlparse.parse(url)
   const cached = await cache.getstream(url)
   if (cached) {
     console.log("http.stream.cached")

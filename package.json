@@ -14,6 +14,7 @@
     "condition-variable": "^1.0.0",
     "hittp": "file:local_modules/hittp",
     "jsonfile": "^5.0.0",
+    "moment": "^2.24.0",
     "robotsdottxt": "file:local_modules/robotsdottxt",
     "sax": "^1.2.4"
   },

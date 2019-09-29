@@ -3,6 +3,7 @@
 const path = require("path")
 const fs = require("fs").promises
 const crypto = require('crypto')
+const str2url = require("../urlparse").str2url
 
 const fsoptions = {recursive: true}
 
@@ -31,6 +32,7 @@ const getReadablePath = (url) => {
 }
 
 const getCacheDirname = (url) => {
+  if (typeof(url) === "string") url = new URL(url)
   const hash = crypto.createHash("sha256")
   hash.update(url.origin)
   const key = hash.digest("hex")
@@ -38,6 +40,7 @@ const getCacheDirname = (url) => {
 }
 
 const getCacheFilename = (url) => {
+  if (typeof(url) === "string") url = new URL(url)
   const hash = crypto.createHash("sha256")
   hash.update(url.pathname)
   return hash.digest("hex")

@@ -4,6 +4,30 @@ const http = require("hittp")
 const sax = require("sax"),
   strict = true, // set to false for html-mode
   parser = sax.createStream(strict)
+const moment = require("moment")
+
+const getRecursive = async (url) => {
+  return new Promise((resolve, reject) => {
+    get(url).then((sitemap) => {
+      if (sitemap.sitemaps) {
+        const urls = []
+        let j = 0
+        for (const mapurl of sitemap.sitemaps) {
+          console.log("Recursing sitemaps")
+          getRecursive(mapurl).then((urlset) => {
+            urls.push(...urlset)
+            j++
+            if (j === sitemap.sitemaps.length) {
+              resolve(urls)
+            }
+          })
+        }
+      } else if (sitemap.urls) {
+        resolve(sitemap.urls)
+      }
+    })
+  })
+}
 
 const get = async (url) => {
   return new Promise((resolve, reject) => {
@@ -15,19 +39,17 @@ const get = async (url) => {
     
     http.stream(url).then((stream) => {
       stream.pipe(parser)
-      parser.on("pipe", () => {
-        console.log("parser piped")
-      })
-      // parser.on("data", (chunk) => {
-      //   console.log("parser got data")
-      // })
       parser.on("opentag", (node) => {
       })
       parser.on("closetag", (name) => {
         if (name === "loc") {
           loc = text
         } else if (name === "lastmod") {
-          lastmod = text
+          // const last = moment(text)
+          // const now = moment()
+          // if (now.diff(last, "years") < 1) {
+            lastmod = text
+          // }
         } else if (name === "url") {
           const url = {loc}
           if (lastmod) url.lastmod = lastmod
@@ -35,33 +57,21 @@ const get = async (url) => {
         } else if (name === "sitemap") {
           const sitemap = {loc}
           if (lastmod) sitemap.lastmod = lastmod
-          sitemaps.push(url)
-        } else if (name === "urlset" || name === "sitemapindex") {
-          console.log(urls, sitemaps)
+          sitemaps.push(loc)
+        } else if (name === "urlset") {
+          // console.log(`URLSET with ${urls.length} URLS`)
+          resolve({urls})
+        } else if (name === "sitemapindex") {
+          // console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
+          resolve({sitemaps})
         }
+        text = null
       })
       parser.on("text", (t) => {
         text = t
       })
       parser.on("error", (err) => {
-        console.log("parser got error")
       })
-      // stream.on("readable", () => {
-      //   let data
-
-      //   while (data = stream.read()) {
-      //     console.log(data.toString())
-      //   }
-      // })
-      // stream.on("data", (chunk) => {
-        // console.log(chunk.toString())
-      // })
-      // stream.on("end", () => {
-      //   console.log("http stream ended")
-      // })
-      // stream.on("error", () => {
-      //   console.log("http stream error")
-      // })
     })
   })
 }
@@ -70,5 +80,6 @@ const sleep = (ms) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 module.exports = {
-  get
+  get,
+  getRecursive
 }

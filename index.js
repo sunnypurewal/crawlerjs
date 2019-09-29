@@ -40,8 +40,8 @@ const main = async () => {
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
-  const sitemap = await sitemapper.get(url)
-  console.log("sitemap", sitemap)
+  const sitemapurls = await sitemapper.getRecursive(url, [])
+  console.log(`Got ${sitemapurls.length} URLs from sitemap`)
 }
 
 main()
