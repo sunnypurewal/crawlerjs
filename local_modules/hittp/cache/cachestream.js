@@ -29,9 +29,11 @@ class CacheStream extends stream.Duplex {
   _read = (size) => {
     let chunk = this.queue.shift()
     let keepgoing = false
-    do {
-      keepgoing = this.push(chunk)
-    } while (keepgoing && this.queue.length > 0)
+    if (chunk) {
+      do {
+        keepgoing = this.push(chunk)
+      } while (keepgoing && this.queue.length > 0)
+    }
   }
 
   // _writev = (chunks, callback) => {
@@ -82,7 +84,7 @@ class CacheStream extends stream.Duplex {
     do {
       keepgoing = this.push(chunk)
       chunk = this.queue.shift()
-    } while (keepgoing && this.queue.length > 0)
+    } while (this.queue.length > 0)
     this.push(null)
     console.log("Cache stream finished", this.queue.length)
     callback()

@@ -7,12 +7,11 @@ const moment = require("moment")
 
 const getRecursive = async (url) => {
   // const sitemap = await get(url)
-  // if (sitemap.sitemaps) {
+  // if (sitemap.sitemaps && sitemap.sitemaps.length) {
   //   const urls = []
   //   let j = 0
   //   for (const mapurl of sitemap.sitemaps) {
   //     const urlset = await getRecursive(mapurl)
-  //     console.log(urlset.length)
   //     urls.push(...urlset)
   //     j++
   //     if (j === sitemap.sitemaps.length) {
@@ -24,7 +23,7 @@ const getRecursive = async (url) => {
   // }
   return new Promise((resolve, reject) => {
     get(url).then((sitemap) => {
-      console.log("GOT SITEMAP", sitemap)
+      // console.log("GOT SITEMAP", sitemap)
       if (sitemap.sitemaps) {
         const urls = []
         let j = 0
@@ -63,6 +62,9 @@ const get = async (url) => {
       // parser.on("pipe", () => {
       //   console.log("parser piped")
       // })
+      parser.on("end", () => {
+        console.log("parser end")
+      })
       parser.on("opentag", (node) => {
       })
       parser.on("closetag", (name) => {
@@ -95,7 +97,8 @@ const get = async (url) => {
         text = t
       })
       parser.on("error", (err) => {
-        reject(err)
+        resolve({urls, sitemaps})
+        // reject(err)
       })
     })
   })
