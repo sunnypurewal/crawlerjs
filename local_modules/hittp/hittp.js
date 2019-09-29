@@ -55,17 +55,17 @@ const stream = async (url) => {
       // resolve(response.pipe(cachestream))
       lasthit.set(options.host, Date.now())
       res.on("end", () => {
-        console.log("HTTP end")
+        // console.log("HTTP end")
         processQ()
       })
       res.on("error", (err) => {
         // reject(err)
-        console.log("HTTP error")
+        // console.log("HTTP error")
         processQ()
       })
       res.on("aborted", () => {
         // reject(new HTTPError("Response Aborted"))
-        console.log("HTTP aborted")
+        // console.log("HTTP aborted")
         processQ()
       })
       resolve(res)
