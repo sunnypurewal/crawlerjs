@@ -6,33 +6,36 @@ const sax = require("sax"),
 const moment = require("moment")
 
 const getRecursive = async (url) => {
-  // const sitemap = await get(url)
-  // if (sitemap.sitemaps && sitemap.sitemaps.length) {
-  //   const urls = []
-  //   let j = 0
-  //   for (const mapurl of sitemap.sitemaps) {
-  //     const urlset = await getRecursive(mapurl)
-  //     urls.push(...urlset)
-  //     j++
-  //     if (j === sitemap.sitemaps.length) {
-  //       return urls
-  //     }
-  //   }
-  // } else {
-  //   return sitemap.urls
-  // }
   if (url.pathname.endsWith(".gz")) {
     console.log("gz")
     url.pathname = url.pathname.slice(0, -3)
   }
+  const sitemap = await get(url)
+  if (sitemap.sitemaps && sitemap.sitemaps.length) {
+    const urls = []
+    let j = 0
+    for (const mapurl of sitemap.sitemaps) {
+      const urlset = await getRecursive(http.str2url(mapurl))
+      urls.push(...urlset)
+      j++
+      if (j === sitemap.sitemaps.length) {
+        return urls
+      }
+    }
+  } else {
+    console.log(sitemap)
+    console.log("Got recursive URLS", sitemap.urls.length)
+    return sitemap.urls
+  }
   return new Promise((resolve, reject) => {
+    console.log("recursive", url.href)
     get(url).then((sitemap) => {
       if (sitemap.sitemaps) {
         const urls = []
         let j = 0
         // console.log("Got INDEX", sitemap.sitemaps.length)
         for (const mapurl of sitemap.sitemaps) {
-          getRecursive(mapurl).then((urlset) => {
+          getRecursive(http.str2url(mapurl)).then((urlset) => {
             urls.push(...urlset)
             j++
             if (j === sitemap.sitemaps.length) {
@@ -40,10 +43,9 @@ const getRecursive = async (url) => {
             }
           })
         }
-        while (j < sitemap.sitemaps.length) {
-          sleep(1000)
-          console.log("Sleeping", j)
-        }
+        sleep(5000).then(() => {
+          console.log("slept 5000", j)
+        })
       } else if (sitemap.urls) {
         // console.log("Got URLSET", sitemap.urls.length)
         resolve(sitemap.urls)
@@ -94,10 +96,10 @@ const get = async (url) => {
           if (lastmod) sitemap.lastmod = lastmod
           sitemaps.push(loc)
         } else if (name === "urlset") {
-          console.log(`URLSET with ${urls.length} URLS`)
+          // console.log(`URLSET with ${urls.length} URLS`)
           resolve({urls})
         } else if (name === "sitemapindex") {
-          console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
+          // console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
           resolve({sitemaps})
         }
         text = null

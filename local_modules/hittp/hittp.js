@@ -9,7 +9,7 @@ const emitter = new EventEmitter()
 
 cache.setPath("./.cache")
 const queue = new Map()
-const MAX_CONNECTIONS = 2
+const MAX_CONNECTIONS = 1
 const requests = []
 const DOMAIN_DELAY = 3000
 const lasthit = new Map()
@@ -26,11 +26,25 @@ emitter.addListener("enqueue", () => {
 
 emitter.addListener("requestend", (url) => {
   console.log("requestend event")
+  const i = requests.findIndex((r) => {
+    r.url.href == url.href
+  })
+  if (i === -1) {
+    console.error("Could not find request in list")
+  }
+  requests.splice(i, 1)
   dequeue()
 })
 
-emitter.addListener("requesterror", (err) => {
+emitter.addListener("requesterror", (err, url) => {
   console.log("requesterror event")
+  const i = requests.findIndex((r) => {
+    r.url.href == url.href
+  })
+  if (i === -1) {
+    console.error("Could not find request in list")
+  }
+  requests.splice(i, 1)
   dequeue()
 })
 
@@ -129,13 +143,13 @@ const getstream = async (url, promise=null) => {
         const cachestream = new cache.CacheStream(url)
         resolve(res.pipe(cachestream))
         res.on("end", () => {
-          emitter.emit("requestend")
+          emitter.emit("requestend", url)
         })
         res.on("error", (err) => {
-          emitter.emit("requesterror")
+          emitter.emit("requesterror", err, url)
         })
         res.on("aborted", () => {
-          emitter.emit("requesterror")
+          emitter.emit("requesterror", err, url)
         })
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
@@ -146,21 +160,21 @@ const getstream = async (url, promise=null) => {
         }
       } else {
         lasthit.set(options.host, Date.now())
-        emitter.emit("requesterror")
+        emitter.emit("requesterror", err, url)
         reject(new HTTPError(res.statusMessage))
       }
     })
     req.on("abort", () => {
-      // emitter.emit("requesterror")
+      // emitter.emit("requesterror", err, url)
     })
     req.on("timeout", () => {
       req.abort()
       reject(new HTTPError("Timeout"))
-      emitter.emit("requesterror")
+      emitter.emit("requesterror", err, url)
     })
     req.on("error", (err) => {
       reject(err)
-      emitter.emit("requesterror")
+      emitter.emit("requesterror", err, url)
     })
     req.end()
   })
