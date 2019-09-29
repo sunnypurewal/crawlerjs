@@ -126,6 +126,8 @@ const getstream = async (url, promise=null) => {
       console.log(res.statusCode, `${options.host}${options.path}`)
       if (res.statusCode >= 200 && res.statusCode <= 299) {
         lasthit.set(options.host, Date.now())
+        const cachestream = new cache.CacheStream(url)
+        resolve(res.pipe(cachestream))
         res.on("end", () => {
           emitter.emit("requestend")
         })
@@ -135,8 +137,6 @@ const getstream = async (url, promise=null) => {
         res.on("aborted", () => {
           emitter.emit("requesterror")
         })
-        const cachestream = new cache.CacheStream(url)
-        resolve(res.pipe(cachestream))
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {

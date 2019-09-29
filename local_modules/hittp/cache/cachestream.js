@@ -81,13 +81,15 @@ class CacheStream extends stream.Duplex {
     // console.log("Cache stream finishing", this.queue.length)
     let chunk = this.queue.shift()
     let keepgoing = false
-    do {
-      keepgoing = this.push(chunk)
-      chunk = this.queue.shift()
-    } while (this.queue.length > 0)
+    if (chunk) {
+      do {
+        keepgoing = this.push(chunk)
+        chunk = this.queue.shift()
+      } while (this.queue.length > 0)
+    }
     this.push(null)
     // console.log("Cache stream finished", this.queue.length)
-    callback()
+    // callback()
   }
 
   _destroy = (err, callback) => {

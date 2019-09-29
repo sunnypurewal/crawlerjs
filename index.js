@@ -33,7 +33,7 @@ const main = async () => {
   
   const random = Math.floor(Math.random() * urls.length-1)
   const url = http.str2url(urls[random])
-  // const url = http.str2url("https://www.nationalgeographic.com/tv/sitemapindex-videomap.xml")
+  // const url = http.str2url("https://www.gannett-cdn.com/sitemaps/pcin/video-sitemap-2019-09.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {

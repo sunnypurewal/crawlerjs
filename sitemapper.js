@@ -43,7 +43,7 @@ const getRecursive = async (url) => {
         resolve(sitemap.urls)
       }
     }).catch((err) => {
-      console.error("SITEMAPPER ERROR", err)
+      console.error("SAX ERROR", err.message)
     })
   })
 }
@@ -60,9 +60,12 @@ const get = async (url) => {
       console.log("Got http stream")
       const parser = sax.createStream(strict)
       stream.pipe(parser)
-      // parser.on("pipe", () => {
-      //   console.log("parser piped")
-      // })
+      parser.on("piped", () => {
+        console.log("parser piped")
+      })
+      parser.on("unpipe", () => {
+        console.log("parser unpiped")
+      })
       parser.on("end", () => {
         console.log("parser end")
       })
@@ -101,6 +104,8 @@ const get = async (url) => {
         // resolve({urls, sitemaps})
         reject(err)
       })
+    }).catch((err) => {
+      console.error("HTTP STREAM ERROR", err.message)
     })
   })
 }
