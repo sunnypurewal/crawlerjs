@@ -33,10 +33,10 @@ const getReadablePath = (url) => {
 
 const getCacheDirname = (url) => {
   if (typeof(url) === "string") url = new URL(url)
-  const hash = crypto.createHash("sha256")
-  hash.update(url.origin)
-  const key = hash.digest("hex")
-  return path.join(CACHE_PATH, key)
+  // const hash = crypto.createHash("sha256")
+  // hash.update(url.origin)
+  // const key = hash.digest("hex")
+  return path.join(CACHE_PATH, url.origin)
 }
 
 const getCacheFilename = (url) => {

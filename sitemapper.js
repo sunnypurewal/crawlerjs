@@ -2,18 +2,34 @@
 
 const http = require("hittp")
 const sax = require("sax"),
-  strict = true, // set to false for html-mode
-  parser = sax.createStream(strict)
+  strict = true
 const moment = require("moment")
 
 const getRecursive = async (url) => {
+  // const sitemap = await get(url)
+  // if (sitemap.sitemaps) {
+  //   const urls = []
+  //   let j = 0
+  //   for (const mapurl of sitemap.sitemaps) {
+  //     const urlset = await getRecursive(mapurl)
+  //     console.log(urlset.length)
+  //     urls.push(...urlset)
+  //     j++
+  //     if (j === sitemap.sitemaps.length) {
+  //       return urls
+  //     }
+  //   }
+  // } else {
+  //   return sitemap.urls
+  // }
   return new Promise((resolve, reject) => {
     get(url).then((sitemap) => {
+      console.log("GOT SITEMAP", sitemap)
       if (sitemap.sitemaps) {
         const urls = []
         let j = 0
+        console.log("Got INDEX", sitemap.sitemaps.length)
         for (const mapurl of sitemap.sitemaps) {
-          console.log("Recursing sitemaps")
           getRecursive(mapurl).then((urlset) => {
             urls.push(...urlset)
             j++
@@ -21,10 +37,14 @@ const getRecursive = async (url) => {
               resolve(urls)
             }
           })
+          while (j < sitemap.sitemaps.length) sleep(500)
         }
       } else if (sitemap.urls) {
+        console.log("Got URLSET", sitemap.urls.length)
         resolve(sitemap.urls)
       }
+    }).catch((err) => {
+      console.error("SITEMAPPER ERROR", err)
     })
   })
 }
@@ -38,10 +58,15 @@ const get = async (url) => {
     let text = ""
     
     http.stream(url).then((stream) => {
+      const parser = sax.createStream(strict)
       stream.pipe(parser)
+      // parser.on("pipe", () => {
+      //   console.log("parser piped")
+      // })
       parser.on("opentag", (node) => {
       })
       parser.on("closetag", (name) => {
+        console.log(name)
         if (name === "loc") {
           loc = text
         } else if (name === "lastmod") {
@@ -71,6 +96,7 @@ const get = async (url) => {
         text = t
       })
       parser.on("error", (err) => {
+        reject(err)
       })
     })
   })

@@ -4,85 +4,155 @@ const http = require("http")
 const https = require("https")
 const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
-const CacheStream = require("./cache/cachestream").CacheStream
-const PassThrough = require("stream").PassThrough
+const EventEmitter = require("events")
+const emitter = new EventEmitter()
 
 cache.setPath("./.cache")
-const queue = []
-const MAX_CONNECTIONS = 20
-const DOMAIN_DELAY = 3
+const queue = new Map()
+const MAX_CONNECTIONS = 2
+const requests = []
+const DOMAIN_DELAY = 3000
 const lasthit = new Map()
+http.globalAgent.maxSockets = MAX_CONNECTIONS
+http.globalAgent.keepAlive = true
+https.globalAgent.maxSockets = MAX_CONNECTIONS
+https.globalAgent.keepAlive = true
+
+emitter.addListener("enqueue", () => {
+  if (requests.length < MAX_CONNECTIONS) {
+    dequeue()
+  }
+})
+
+emitter.addListener("requestend", (url) => {
+  console.log("requestend event")
+  dequeue()
+})
+
+emitter.addListener("requesterror", (err) => {
+  console.log("requesterror event")
+  dequeue()
+})
 
 const processQ = async () => {
-  if (queue.length > 0) {
+  if (queue.size > 0) {
     const params = queue.shift()
-    const now = Date.now()
+    // const now = Date.now()
     const hit = lasthit.get(params.url.host)
     if (Date.now() - hit < DOMAIN_DELAY) {
-      console.log("Delaying domain", params.url.host)
-      queue.push(params)
-      processQ()
+      delay(params)
+    //   queue.push(params)
+    //   processQ()
     } else {
       console.log("Picking url off queue", params.url.href, queue.length)
-      get(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
+      stream(params.url, {resolve:params.resolve,reject:params.reject}, params.redirCount)
     }
   }
 }
 
-const pushQ = async (obj) => {
-  queue.push(obj)
-  processQ()
+const delay = (params) => {
+  console.log("Delaying domain", params.url.host)
+  setTimeout(() => {
+    queue.push(params)
+    processQ()
+  }, DOMAIN_DELAY)
+}
+
+const enqueue = async (obj) => {
+  const url = obj.url
+  if (!queue.has(url.host)) queue.set(url.host, [])
+  queue.get(url.host).push(obj)
+  emitter.emit("enqueue")
+}
+
+const dequeue = async (url=null) => {
+  if (queue.size > 0) {
+    let nextobj = null
+    let urlq = null
+    if (url && queue.has(url.host)) {
+      urlq = queue.get(url.host)
+      nextobj = urlq.shift()
+      if (urlq.length > 0) queue.set(url.host, urlq)
+      else queue.delete(url.host)
+    } else {
+      const key = queue.keys().next().value
+      urlq = queue.get(key)
+      nextobj = urlq.shift()
+      if (urlq.length > 0) queue.set(key, urlq)
+      else queue.delete(key)
+    }
+    requests.push(nextobj.url.host)
+    getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
+  }
 }
 
 const stream = async (url) => {
-  if (typeof(url) === "string") url = urlparse.parse(url)
-  const cached = await cache.getstream(url)
-  if (cached) {
-    console.log("http.stream.cached")
-    return cached
-    // processQ()
-    // if (promise) {
-    //   promise.resolve(cached)
-    //   return
-    // } else return cached
-  }
   return new Promise((resolve, reject) => {
+    enqueue({url, resolve, reject})
+    // getstream(url).then((stream) => {
+    //   resolve(stream)
+    // })
+  })
+}
+
+const getstream = async (url, promise=null) => {
+  return new Promise((resolve, reject) => {
+    if (promise) {
+      resolve = promise.resolve 
+      reject = promise.reject
+    }
+    if (typeof(url) === "string") url = urlparse.parse(url)
+    cache.getstream(url).then((cached) => {
+      if (cached) {
+        console.log("http.stream.cached")
+        resolve(cached)
+      }
+    })
     const h = url.protocol.indexOf("https") != -1 ? https : http
+    const hit = lasthit.get(url.host)
+    const timesince = Date.now() - hit
+    // if (timesince < DOMAIN_DELAY) {
+      // delay({url, resolve, reject})
+      // console.log("Delaying domain", url.host, timesince)
+      // pushQ({url,resolve, reject})
+    // }
     console.log("http.stream ", url.href)
-    const options = {host:url.host, path:url.pathname}
-    const cachestream = new CacheStream(url)
+    const options = {host:url.host, path:url.pathname,keepAlive:true}
     // const cachestream = new PassThrough()
     const req = h.request(options, (res) => {
       // resolve(response.pipe(cachestream))
       lasthit.set(options.host, Date.now())
+      console.log(res.statusCode, `${options.host}${options.path}`)
       res.on("end", () => {
         // console.log("HTTP end")
-        processQ()
+        // processQ()
+        // emitter.emit("requestend")
       })
       res.on("error", (err) => {
         // reject(err)
         // console.log("HTTP error")
-        processQ()
+        emitter.emit("requesterror")
       })
       res.on("aborted", () => {
+        emitter.emit("requesterror")
         // reject(new HTTPError("Response Aborted"))
         // console.log("HTTP aborted")
-        processQ()
+        // processQ()
       })
-      resolve(res)
+      const cachestream = new cache.CacheStream(url)
+      resolve(res.pipe(cachestream))
     })
     req.on("abort", () => {
-      processQ()
+      emitter.emit("requesterror")
     })
     req.on("timeout", () => {
       req.abort()
-      console.log("HI timeout", new HTTPError("Timeout"))
       reject(new HTTPError("Timeout"))
+      // emitter.emit("requesterror")
     })
     req.on("error", (err) => {
-      console.error("HI error", err)
       reject(err)
-      processQ()
+      emitter.emit("requesterror")
     })
     req.end()
   })

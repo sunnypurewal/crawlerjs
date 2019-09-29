@@ -20,7 +20,6 @@ const main = async () => {
   let urls = []
   for (let i = 0; i < robots.length; i++) {
     const robot = robots[i]
-    const roboturl = http.str2url(robot.url)
     const sitemaps = robot.sitemaps
     for (let j = 0; j < sitemaps.length; j++) {
       let sitemapurl = sitemaps[j]
@@ -31,10 +30,10 @@ const main = async () => {
       urls.push(sitemapurl)
     }
   }
-
+  
   const random = Math.floor(Math.random() * urls.length-1)
   const url = http.str2url(urls[random])
-  // const url = http.str2url("https://www.scmp.com/sitemap_gallery.xml")
+  // const url = http.str2url("https://www.nationalgeographic.com/tv/sitemapindex-videomap.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {
