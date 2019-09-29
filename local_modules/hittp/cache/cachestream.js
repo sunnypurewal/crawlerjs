@@ -2,6 +2,7 @@
 const stream = require("stream")
 const fs = require("fs").promises
 const cachepath = require("./cachepath")
+const Future = require('future')
 
 class CacheStream extends stream.Duplex {
   constructor(url, options) {
@@ -12,28 +13,51 @@ class CacheStream extends stream.Duplex {
     this.readOffset = 0
     this.creating = false
     this.queue = []
+    this.future = null
   }
 
-  getFilehandle = async () => {
-    if (!this.filehandle) {
-      this.creating = true
-      const filepath = await cachepath.getWritablePath(this.url)
-      const handle = await fs.open(filepath, "w+")
-      this.filehandle = handle
-      return this.filehandle
-    } else {
-      return this.filehandle
-    }
+  getFilehandle = () => {
+    if (!this.future) this.future = Future.create(this)
+    else return this.future
+    cachepath.getWritablePath(this.url).then((filepath) => {
+      fs.open(filepath, "w+").then((handle) => {
+        this.filehandle = handle
+        this.future.deliver(null, handle)
+      })
+    })
+    return this.future
+    // if (!this.filehandle) {
+    //   this.creating = true
+    //   const filepath = await cachepath.getWritablePath(this.url)
+    //   const handle = await fs.open(filepath, "w+")
+    //   this.filehandle = handle
+    //   return this.filehandle
+    // } else {
+    //   return this.filehandle
+    // }
   }
 
   _read = (size) => {
-    let chunk = this.queue.shift()
-    let keepgoing = false
-    if (chunk) {
-      do {
-        keepgoing = this.push(chunk)
-      } while (keepgoing && this.queue.length > 0)
-    }
+    this.getFilehandle().whenever((err, filehandle) => {
+      this.filehandle.stat().then((stats) => {
+        let bufsize = size
+        if (stats.size - this.readOffset < size) {
+          size = stats.size - this.readOffset
+        }
+        const buffer = Buffer.allocUnsafe(size)
+        this.filehandle.read(buffer, 0, size, this.readOffset).then((obj) => {
+          let keepgoing = this.push(obj.buf)
+          this.readOffset += obj.bytesRead
+        })
+      })
+    })
+    // let chunk = this.queue.shift()
+    // let keepgoing = false
+    // if (chunk) {
+    //   do {
+    //     keepgoing = this.push(chunk)
+    //   } while (keepgoing && this.queue.length > 0)
+    // }
   }
 
   // _writev = (chunks, callback) => {
@@ -63,9 +87,7 @@ class CacheStream extends stream.Duplex {
   // }
 
   _write = (chunk, encoding, callback) => {
-    this.queue.push(chunk)
-    // console.log(chunk.toString())
-    this.getFilehandle().then((filehandle) => {
+    this.getFilehandle().whenever((err, filehandle) => {
       try {
         fs.appendFile(filehandle, chunk, {encoding}).then(() => {
 
@@ -79,15 +101,19 @@ class CacheStream extends stream.Duplex {
 
   _final = (callback) => {
     // console.log("Cache stream finishing", this.queue.length)
-    let chunk = this.queue.shift()
-    let keepgoing = false
-    if (chunk) {
-      do {
-        keepgoing = this.push(chunk)
-        chunk = this.queue.shift()
-      } while (this.queue.length > 0)
-    }
-    this.push(null)
+    // let chunk = this.queue.shift()
+    // let keepgoing = false
+    // if (chunk) {
+    //   do {
+    //     keepgoing = this.push(chunk)
+    //     chunk = this.queue.shift()
+    //   } while (this.queue.length > 0)
+    // }
+    this.getFilehandle().whenever((err, filehandle) => {
+      this.filehandle.stat().then((stats) => {
+        this.push(null)
+      })
+    })
     // console.log("Cache stream finished", this.queue.length)
     // callback()
   }
