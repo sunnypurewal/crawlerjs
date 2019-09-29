@@ -27,7 +27,7 @@ const getRecursive = async (url) => {
       if (sitemap.sitemaps) {
         const urls = []
         let j = 0
-        console.log("Got INDEX", sitemap.sitemaps.length)
+        // console.log("Got INDEX", sitemap.sitemaps.length)
         for (const mapurl of sitemap.sitemaps) {
           getRecursive(mapurl).then((urlset) => {
             urls.push(...urlset)
@@ -39,7 +39,7 @@ const getRecursive = async (url) => {
           while (j < sitemap.sitemaps.length) sleep(500)
         }
       } else if (sitemap.urls) {
-        console.log("Got URLSET", sitemap.urls.length)
+        // console.log("Got URLSET", sitemap.urls.length)
         resolve(sitemap.urls)
       }
     }).catch((err) => {
@@ -57,6 +57,7 @@ const get = async (url) => {
     let text = ""
     
     http.stream(url).then((stream) => {
+      console.log("Got http stream")
       const parser = sax.createStream(strict)
       stream.pipe(parser)
       // parser.on("pipe", () => {
@@ -97,8 +98,8 @@ const get = async (url) => {
         text = t
       })
       parser.on("error", (err) => {
-        resolve({urls, sitemaps})
-        // reject(err)
+        // resolve({urls, sitemaps})
+        reject(err)
       })
     })
   })

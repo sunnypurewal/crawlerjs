@@ -81,7 +81,7 @@ const dequeue = async (url=null) => {
       if (urlq.length > 0) queue.set(key, urlq)
       else queue.delete(key)
     }
-    requests.push(nextobj.url.host)
+    requests.push(nextobj)
     getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
   } else {
     console.log("http queue is empty")
@@ -119,38 +119,44 @@ const getstream = async (url, promise=null) => {
       // pushQ({url,resolve, reject})
     // }
     console.log("http.stream ", url.href)
-    const options = {host:url.host, path:url.pathname,keepAlive:true}
+    const options = {host:url.host, path:url.pathname,timeout:3000}
     // const cachestream = new PassThrough()
     const req = h.request(options, (res) => {
       // resolve(response.pipe(cachestream))
-      lasthit.set(options.host, Date.now())
       console.log(res.statusCode, `${options.host}${options.path}`)
-      res.on("end", () => {
-        // console.log("HTTP end")
-        // processQ()
-        // emitter.emit("requestend")
-      })
-      res.on("error", (err) => {
-        // reject(err)
-        // console.log("HTTP error")
+      if (res.statusCode >= 200 && res.statusCode <= 299) {
+        lasthit.set(options.host, Date.now())
+        res.on("end", () => {
+          emitter.emit("requestend")
+        })
+        res.on("error", (err) => {
+          emitter.emit("requesterror")
+        })
+        res.on("aborted", () => {
+          emitter.emit("requesterror")
+        })
+        const cachestream = new cache.CacheStream(url)
+        resolve(res.pipe(cachestream))
+      } else if (res.statusCode >= 300 && res.statusCode <= 399) {
+        const location = res.headers.location
+        if (location) {
+          console.log("Redirecting to ", location)
+          enqueue({url: urlparse.parse(location), resolve, reject})
+          return
+        }
+      } else {
+        lasthit.set(options.host, Date.now())
         emitter.emit("requesterror")
-      })
-      res.on("aborted", () => {
-        emitter.emit("requesterror")
-        // reject(new HTTPError("Response Aborted"))
-        // console.log("HTTP aborted")
-        // processQ()
-      })
-      const cachestream = new cache.CacheStream(url)
-      resolve(res.pipe(cachestream))
+        reject(new HTTPError(res.statusMessage))
+      }
     })
     req.on("abort", () => {
-      emitter.emit("requesterror")
+      // emitter.emit("requesterror")
     })
     req.on("timeout", () => {
       req.abort()
       reject(new HTTPError("Timeout"))
-      // emitter.emit("requesterror")
+      emitter.emit("requesterror")
     })
     req.on("error", (err) => {
       reject(err)
