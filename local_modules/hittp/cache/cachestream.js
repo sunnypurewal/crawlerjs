@@ -26,71 +26,51 @@ class CacheStream extends stream.Duplex {
       })
     })
     return this.future
-    // if (!this.filehandle) {
-    //   this.creating = true
-    //   const filepath = await cachepath.getWritablePath(this.url)
-    //   const handle = await fs.open(filepath, "w+")
-    //   this.filehandle = handle
-    //   return this.filehandle
-    // } else {
-    //   return this.filehandle
-    // }
   }
 
   _read = (size) => {
     this.getFilehandle().whenever((err, filehandle) => {
       this.filehandle.stat().then((stats) => {
-        let bufsize = size
-        if (stats.size - this.readOffset < size) {
-          size = stats.size - this.readOffset
-        }
+        size = stats.size - this.readOffset
         const buffer = Buffer.allocUnsafe(size)
+        console.log("Reading ", size)
         this.filehandle.read(buffer, 0, size, this.readOffset).then((obj) => {
-          let keepgoing = this.push(obj.buf)
-          this.readOffset += obj.bytesRead
+          console.log("Read", obj.bytesRead, buffer.toString())
+          if (obj.bytesRead) {
+            let keepgoing = this.push(buffer)
+            console.log("read", keepgoing, obj.bytesRead)
+            this.readOffset += obj.bytesRead
+          }
         })
       })
     })
-    // let chunk = this.queue.shift()
-    // let keepgoing = false
-    // if (chunk) {
-    //   do {
-    //     keepgoing = this.push(chunk)
-    //   } while (keepgoing && this.queue.length > 0)
-    // }
   }
 
   // _writev = (chunks, callback) => {
-  //   console.log("Writing chunks to CacheStream")
-  //   this.queue.push(...chunks)
-  //   // console.log(...chunks)
   //   let j = 0
-  //   for (let i = 0; i < chunks.length; i++) {
-  //     const chunk = chunks[i];
-  //     this.getFilehandle().then((filehandle) => {
-  //       try {
+  //   this.getFilehandle().whenever((err, filehandle) => {
+  //     try {
+  //       for (let i = 0; i < chunks.length; i++) {
+  //         const chunk = chunks[i];
   //         fs.appendFile(filehandle, chunk).then(() => {
   //           j++
   //           if (j === chunks.length) {
   //             callback()
   //           }
   //         })
-  //       } catch (err) {
-  //         console.error(err)
   //         j++
-  //         if (j === chunks.length) {
-  //           callback(err)
-  //         }
   //       }
-  //     })
-  //   }
+  //     } catch (err) {
+  //       console.error(err)
+  //       callback(err)
+  //     }
+  //   })
   // }
 
   _write = (chunk, encoding, callback) => {
     this.getFilehandle().whenever((err, filehandle) => {
       try {
         fs.appendFile(filehandle, chunk, {encoding}).then(() => {
-
           callback()
         })
       } catch (err) {
@@ -100,22 +80,22 @@ class CacheStream extends stream.Duplex {
   }
 
   _final = (callback) => {
-    // console.log("Cache stream finishing", this.queue.length)
-    // let chunk = this.queue.shift()
-    // let keepgoing = false
-    // if (chunk) {
-    //   do {
-    //     keepgoing = this.push(chunk)
-    //     chunk = this.queue.shift()
-    //   } while (this.queue.length > 0)
-    // }
     this.getFilehandle().whenever((err, filehandle) => {
       this.filehandle.stat().then((stats) => {
-        this.push(null)
+        const size = stats.size - this.readOffset
+        const buffer = Buffer.allocUnsafe(size)
+        console.log("finaling ", size)
+        this.filehandle.read(buffer, 0, size, this.readOffset).then((obj) => {
+          console.log("finaled", obj.bytesRead, buffer.toString())
+          if (obj.bytesRead) {
+            let keepgoing = this.push(buffer)
+            console.log("final", keepgoing, obj.bytesRead)
+            this.readOffset += obj.bytesRead
+          }
+          callback()
+        })
       })
     })
-    // console.log("Cache stream finished", this.queue.length)
-    // callback()
   }
 
   _destroy = (err, callback) => {

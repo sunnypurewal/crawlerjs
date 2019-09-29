@@ -21,6 +21,10 @@ const getRecursive = async (url) => {
   // } else {
   //   return sitemap.urls
   // }
+  if (url.pathname.endsWith(".gz")) {
+    console.log("gz")
+    url.pathname = url.pathname.slice(0, -3)
+  }
   return new Promise((resolve, reject) => {
     get(url).then((sitemap) => {
       console.log("GOT SITEMAP", sitemap)
@@ -57,18 +61,18 @@ const get = async (url) => {
     let text = ""
     
     http.stream(url).then((stream) => {
-      console.log("Got http stream")
       const parser = sax.createStream(strict)
       stream.pipe(parser)
-      parser.on("pipe", () => {
-        console.log("parser piped")
-      })
-      parser.on("unpipe", () => {
-        console.log("parser unpiped")
-      })
-      parser.on("end", () => {
-        console.log("parser end")
-      })
+      
+      // parser.on("pipe", () => {
+      //   console.log("parser piped")
+      // })
+      // parser.on("unpipe", () => {
+      //   console.log("parser unpiped")
+      // })
+      // parser.on("end", () => {
+      //   console.log("parser end")
+      // })
       parser.on("opentag", (node) => {
       })
       parser.on("closetag", (name) => {
@@ -89,10 +93,10 @@ const get = async (url) => {
           if (lastmod) sitemap.lastmod = lastmod
           sitemaps.push(loc)
         } else if (name === "urlset") {
-          // console.log(`URLSET with ${urls.length} URLS`)
+          console.log(`URLSET with ${urls.length} URLS`)
           resolve({urls})
         } else if (name === "sitemapindex") {
-          // console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
+          console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
           resolve({sitemaps})
         }
         text = null

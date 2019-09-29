@@ -119,7 +119,7 @@ const getstream = async (url, promise=null) => {
       // pushQ({url,resolve, reject})
     // }
     console.log("http.stream ", url.href)
-    const options = {host:url.host, path:url.pathname,timeout:3000}
+    const options = {host:url.host, path:url.pathname,timeout:10000}
     // const cachestream = new PassThrough()
     const req = h.request(options, (res) => {
       // resolve(response.pipe(cachestream))
