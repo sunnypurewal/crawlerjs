@@ -66,7 +66,6 @@ const get = async (url) => {
       parser.on("opentag", (node) => {
       })
       parser.on("closetag", (name) => {
-        console.log(name)
         if (name === "loc") {
           loc = text
         } else if (name === "lastmod") {

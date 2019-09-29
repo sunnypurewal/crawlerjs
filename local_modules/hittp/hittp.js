@@ -83,6 +83,8 @@ const dequeue = async (url=null) => {
     }
     requests.push(nextobj.url.host)
     getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
+  } else {
+    console.log("http queue is empty")
   }
 }
 
