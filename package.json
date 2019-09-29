@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "condition-variable": "^1.0.0",
     "hittp": "file:local_modules/hittp",
     "jsonfile": "^5.0.0",
     "robotsdottxt": "file:local_modules/robotsdottxt",

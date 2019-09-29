@@ -35,36 +35,51 @@ const pushQ = async (obj) => {
 }
 
 const stream = async (url) => {
-  try {
-    const cached = await cache.getstream(url)
-    if (cached) {
-      console.log("http.stream.cached")
-      return cached
-      // processQ()
-      // if (promise) {
-      //   promise.resolve(cached)
-      //   return
-      // } else return cached
-    }
-  } catch (error) { console.error(error) }
+  const cached = await cache.getstream(url)
+  if (cached) {
+    console.log("http.stream.cached")
+    return cached
+    // processQ()
+    // if (promise) {
+    //   promise.resolve(cached)
+    //   return
+    // } else return cached
+  }
   return new Promise((resolve, reject) => {
     const h = url.protocol.indexOf("https") != -1 ? https : http
     console.log("http.stream ", url.href)
     const options = {host:url.host, path:url.pathname}
     const cachestream = new CacheStream(url)
     // const cachestream = new PassThrough()
-    const req = h.request(options, (response) => {
-      console.log("STREAM RESPONSE")
-      resolve(response.pipe(cachestream))
+    const req = h.request(options, (res) => {
+      // resolve(response.pipe(cachestream))
+      lasthit.set(options.host, Date.now())
+      res.on("end", () => {
+        console.log("HTTP end")
+        processQ()
+      })
+      res.on("error", (err) => {
+        // reject(err)
+        console.log("HTTP error")
+        processQ()
+      })
+      res.on("aborted", () => {
+        // reject(new HTTPError("Response Aborted"))
+        console.log("HTTP aborted")
+        processQ()
+      })
+      resolve(res)
     })
     req.on("abort", () => {
       processQ()
     })
     req.on("timeout", () => {
       req.abort()
+      console.log("HI timeout", new HTTPError("Timeout"))
       reject(new HTTPError("Timeout"))
     })
     req.on("error", (err) => {
+      console.error("HI error", err)
       reject(err)
       processQ()
     })

@@ -33,12 +33,15 @@ const main = async () => {
   }
 
   const random = Math.floor(Math.random() * urls.length-1)
-  // const url = http.str2url(urls[random])
-  const url = http.str2url("http://www.tuscaloosanews.com/section/google-zz-sitemap-index")
+  const url = http.str2url(urls[random])
+  // const url = http.str2url("https://www.scmp.com/sitemap_gallery.xml")
   console.log(url.href)
+  // const stream = await http.stream(url)
+  // stream.on("data", (chunk) => {
+  //   console.log("Got data", chunk)
+  // })
   const sitemap = await sitemapper.get(url)
-  // console.log(sitemap)
-  // console.log(sitemap.urls)
+  console.log("sitemap", sitemap)
 }
 
 main()

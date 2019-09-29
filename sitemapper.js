@@ -2,55 +2,36 @@
 
 const http = require("hittp")
 const sax = require("sax"),
-  strict = true // set to false for html-mode
+  strict = true, // set to false for html-mode
+  parser = sax.createStream(strict)
 
 const get = async (url) => {
-  const saxstream = sax.createStream()
-  const urls = []
-  const sitemaps = []
-  let loc = null
-  let lastmod = null
-  let text = ""
-  saxstream.on("error", (err) => {
-    console.error(err)
-  })
-  saxstream.on("opentag", (node) => {
-    const name = node.name
-    if (name === "URL") {
-      url = {}
-    }
-  })
-  saxstream.on("text", (t) => {
-    text = t
-  })
-  saxstream.on("closetag", (name) => {
-    if (name == name && text && text.length > 0) {
-      if (name === "LOC") {
-        loc = text
-      } else if (name === "LASTMOD" && text) {
-        lastmod = text
-      } else if (name === "URL" && text) {
-        urls.push({loc,lastmod})
-        text = null
-      } else if (name === "SITEMAP") {
-        sitemaps.push({loc,lastmod})
-        text = null
-      } else if (name === "SITEMAPINDEX" || name === "URLSET") {
-        console.log(urls,sitemaps)
-        return {urls, sitemaps}
-      }
-    }
-  })
-  saxstream.on("pipe", () => {
-    console.log("Saxstream piped")
-  })
+  return new Promise((resolve, reject) => {
+    const urls = []
+    const sitemaps = []
+    let loc = null
+    let lastmod = null
+    let text = ""
+    
+    http.stream(url).then((stream) => {
+      stream.on("readable", () => {
+        let data
 
-  saxstream.on("data", (chunk) => {
-    console.log("saxstream data")
+        while (data = stream.read()) {
+          console.log(data.toString())
+        }
+      })
+      // stream.on("data", (chunk) => {
+      //   console.log(chunk.toString())
+      // })
+      stream.on("end", () => {
+        console.log("http stream ended")
+      })
+      stream.on("error", () => {
+        console.log("http stream error")
+      })
+    })
   })
-  
-  const response = await http.stream(url)
-  response.pipe(saxstream)
 }
 
 const sleep = (ms) => {
