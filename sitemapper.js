@@ -54,6 +54,7 @@ const _getRecursive = async (url, outstream=null) => {
       // })
     }).catch((err) => {
       console.error("RECURSIVE ERROR", err.message)
+      reject(err)
     })
   })
 }
