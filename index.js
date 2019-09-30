@@ -33,15 +33,15 @@ const main = async () => {
   }
   
   const random = Math.floor(Math.random() * urls.length-1)
-  const url = http.str2url(urls[random])
-  // const url = http.str2url("https://www.univision.com/video-sitemap.xml")
+  // const url = http.str2url(urls[random])
+  const url = http.str2url("http://www.bbc.com/sitemap.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
   try {
-    const file = fs.createWriteStream(`./data/${url.host}.sitemap`)
+    const file = fs.createWriteStream(`./data/${url.host}.urlset`)
     const sitemapstream = await sitemapper.get(url)
     sitemapstream.pipe(file)
   } catch (err) {

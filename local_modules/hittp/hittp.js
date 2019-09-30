@@ -25,13 +25,10 @@ emitter.addListener("enqueue", () => {
 })
 
 emitter.addListener("requestend", (url) => {
-  console.log(requests)
+  console.log(requests.length, "requests", requests)
   const i = requests.findIndex((r) => {
-    console.log(r.url.href, "==", url.href)
-    console.log(r.url.href==url.href)
-    r.url.href == url.href
+    return r.url.href == url.href
   })
-  console.log(i)
   // console.log(`Requeste ended ${i} ${requests.length}`)
   if (i === -1) {
   } else {
@@ -112,13 +109,14 @@ const getstream = async (url, promise=null) => {
     cache.getstream(url).then((cached) => {
       if (cached) {
         console.log("http.stream.cached")
+        emitter.emit("requestend")
         resolve(cached)
         return
       }
     })
     const h = url.protocol.indexOf("https") != -1 ? https : http
-    const hit = lasthit.get(url.host)
-    const timesince = Date.now() - hit
+    // const hit = lasthit.get(url.host)
+    // const timesince = Date.now() - hit
     // if (timesince < DOMAIN_DELAY) {
       // delay({url, resolve, reject})
       // console.log("Delaying domain", url.host, timesince)

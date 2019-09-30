@@ -37,7 +37,7 @@ const _getRecursive = async (url, outstream=null) => {
           if (chunkobj.lastmod) {
             const now = moment()
             const then = moment(chunkobj.lastmod)
-            if (now.diff(then, "years") < 1) {
+            if (now.diff(then, "months") < 3) {
               _getRecursive(chunkobj.loc, outstream)
             }
           } else {
@@ -86,12 +86,12 @@ const _get = async (url) => {
           if (passthrough.writableEnded) return
           const obj = {loc}
           if (lastmod) obj.lastmod = lastmod
-          passthrough.write(`${JSON.stringify(obj)}\n`)
+          passthrough.write(`${JSON.stringify(obj)}` + "\n")
         } else if (name === "sitemap") {
           if (passthrough.writableEnded) return
           const obj = {loc}
           if (lastmod) obj.lastmod = lastmod
-          passthrough.write(`${JSON.stringify(obj)}\n`)
+          passthrough.write(`${JSON.stringify(obj)}` + "\n")
         } else if (name === "urlset") {
           if (passthrough.writableEnded) return
           passthrough.end()
