@@ -72,6 +72,7 @@ const _get = async (url) => {
       const passthrough = stream.PassThrough()
       resolve(passthrough)
       parser.on("opentag", (node) => {
+        if (passthrough.writableEnded) return
         if (node.name === "sitemapindex") {
           passthrough.write(node.name)
         }
@@ -92,8 +93,10 @@ const _get = async (url) => {
           if (lastmod) obj.lastmod = lastmod
           passthrough.write(`${JSON.stringify(obj)}\n`)
         } else if (name === "urlset") {
+          if (passthrough.writableEnded) return
           passthrough.end()
         } else if (name === "sitemapindex") {
+          if (passthrough.writableEnded) return
           passthrough.end()
         }
         text = null
