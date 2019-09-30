@@ -36,7 +36,7 @@ emitter.addListener("enqueue", (url) => {
 emitter.addListener("requestend", (url) => {
   // console.log("request end", url.href)
   const i = requests.findIndex((r) => {
-    console.log(r.href, url.href)
+    // console.log(r.href, url.href)
     return r.href == url.href
   })
   // console.log(i)
@@ -59,12 +59,12 @@ emitter.addListener("requestend", (url) => {
   if (requests.length < MAX_CONNECTIONS) {
     dequeue(url)
   } else {
-    console.log("TOO MANY CONNECTIONS")
+    // console.log("TOO MANY CONNECTIONS")
   }
 })
 
 emitter.addListener("requesterror", (err, url) => {
-  console.log("request error", err)
+  // console.log("request error", err)
   const i = requests.findIndex((r) => {
     return r.href == url.href
   })
@@ -89,7 +89,7 @@ emitter.addListener("requesterror", (err, url) => {
 })
 
 const delay = (params) => {
-  console.log("Delaying domain", params.url.host)
+  // console.log("delaying domain", params.url.host)
   setTimeout(() => {
     enqueue(params)
   }, DOMAIN_DELAY)
