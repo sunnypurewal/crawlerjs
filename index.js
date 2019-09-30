@@ -4,6 +4,7 @@ const robotsdottxt = require("robotsdottxt")
 const jsonfile = require("jsonfile")
 const http = require("hittp")
 const sitemapper = require("./sitemapper")
+const fs = require("fs")
 
 const main = async () => {
   // let urls = await discovery.fromJSON("./.data/domains.json")
@@ -33,15 +34,16 @@ const main = async () => {
   
   const random = Math.floor(Math.random() * urls.length-1)
   const url = http.str2url(urls[random])
-  // const url = http.str2url("https://www.economist.com/sitemap.xml")
+  // const url = http.str2url("https://www.desertsun.com/web-sitemap-index.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
   try {
-    const sitemapurls = await sitemapper.get(url)
-    console.log(`Got ${sitemapurls.length} URLs from sitemap`)
+    const file = fs.createWriteStream(`./data/${url.host}.sitemap`)
+    const sitemapstream = await sitemapper.get(url)
+    sitemapstream.pipe(file)
   } catch (err) {
     console.error("index.js", err)
   }

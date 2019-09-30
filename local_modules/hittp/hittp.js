@@ -25,26 +25,24 @@ emitter.addListener("enqueue", () => {
 })
 
 emitter.addListener("requestend", (url) => {
-  console.log("requestend event")
   const i = requests.findIndex((r) => {
     r.url.href == url.href
   })
   if (i === -1) {
-    console.error("Could not find request in list")
+  } else {
+    requests.splice(i, 1)
   }
-  requests.splice(i, 1)
   dequeue()
 })
 
 emitter.addListener("requesterror", (err, url) => {
-  console.log("requesterror event")
   const i = requests.findIndex((r) => {
     r.url.href == url.href
   })
   if (i === -1) {
-    console.error("Could not find request in list")
+  } else {
+    requests.splice(i, 1)
   }
-  requests.splice(i, 1)
   dequeue()
 })
 
@@ -104,6 +102,7 @@ const dequeue = async (url=null) => {
 
 const stream = async (url) => {
   return new Promise((resolve, reject) => {
+    if (typeof(url) === "string") url = urlparse.parse(url)
     enqueue({url, resolve, reject})
     // getstream(url).then((stream) => {
     //   resolve(stream)
@@ -122,6 +121,7 @@ const getstream = async (url, promise=null) => {
       if (cached) {
         console.log("http.stream.cached")
         resolve(cached)
+        return
       }
     })
     const h = url.protocol.indexOf("https") != -1 ? https : http
@@ -149,7 +149,7 @@ const getstream = async (url, promise=null) => {
           emitter.emit("requesterror", err, url)
         })
         res.on("aborted", () => {
-          emitter.emit("requesterror", err, url)
+          emitter.emit("requesterror", new HTTPError("Aborted"), url)
         })
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
@@ -160,7 +160,7 @@ const getstream = async (url, promise=null) => {
         }
       } else {
         lasthit.set(options.host, Date.now())
-        emitter.emit("requesterror", err, url)
+        emitter.emit("requesterror", new HTTPError(res.statusMessage), url)
         reject(new HTTPError(res.statusMessage))
       }
     })
@@ -170,7 +170,7 @@ const getstream = async (url, promise=null) => {
     req.on("timeout", () => {
       req.abort()
       reject(new HTTPError("Timeout"))
-      emitter.emit("requesterror", err, url)
+      emitter.emit("requesterror", new HTTPError("Timeout"), url)
     })
     req.on("error", (err) => {
       reject(err)

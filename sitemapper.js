@@ -4,54 +4,56 @@ const http = require("hittp")
 const sax = require("sax"),
   strict = true
 const moment = require("moment")
+const stream = require("stream")
 
 const get = async (url) => {
   if (url.pathname.endsWith(".gz")) {
     console.log("gz")
     url.pathname = url.pathname.slice(0, -3)
   }
-  // const sitemap = await get(url)
-  // if (sitemap.sitemaps && sitemap.sitemaps.length) {
-  //   const urls = []
-  //   let j = 0
-  //   for (const mapurl of sitemap.sitemaps) {
-  //     const urlset = await getRecursive(http.str2url(mapurl))
-  //     urls.push(...urlset)
-  //     j++
-  //     if (j === sitemap.sitemaps.length) {
-  //       return urls
-  //     }
-  //   }
-  // } else {
-  //   console.log(sitemap)
-  //   console.log("Got recursive URLS", sitemap.urls.length)
-  //   return sitemap.urls
-  // }
+  try {
+    const sitemapstream = await _getRecursive(url)
+    return sitemapstream
+  } catch (err) {
+    console.error("sitemapper.get", err.message)
+    return null
+  }
+}
+
+const _getRecursive = async (url, outstream=null) => {
   return new Promise((resolve, reject) => {
-    console.log("recursive", url.href)
-    _get(url).then((sitemap) => {
-      if (sitemap.sitemaps) {
-        const urls = []
-        let j = 0
-        // console.log("Got INDEX", sitemap.sitemaps.length)
-        for (const mapurl of sitemap.sitemaps) {
-          get(http.str2url(mapurl)).then((urlset) => {
-            urls.push(...urlset)
-            j++
-            if (j === sitemap.sitemaps.length) {
-              resolve(urls)
-            }
-          })
-        }
-        sleep(5000).then(() => {
-          console.log("slept 5000", j)
-        })
-      } else if (sitemap.urls) {
-        // console.log("Got URLSET", sitemap.urls.length)
-        resolve(sitemap.urls)
+    let isSitemapIndex = false
+    _get(url).then((urlstream) => {
+      if (!outstream) {
+        outstream = stream.PassThrough()
+        resolve(outstream)
       }
+      urlstream.on("data", (chunk) => {
+        const chunkstring = chunk.toString()
+        if (chunkstring === "sitemapindex") {
+          isSitemapIndex = true
+        } else if (isSitemapIndex) {
+          const chunkobj = JSON.parse(chunkstring)
+          if (chunkobj.lastmod) {
+            const now = moment()
+            const then = moment(chunkobj.lastmod)
+            if (now.diff(then, "years") < 1) {
+              _getRecursive(chunkobj.loc, outstream)
+            }
+          } else {
+            _getRecursive(chunkobj.loc, outstream)
+          }
+          //chunk is a sitemap
+        } else {
+          outstream.write(chunk)
+          //chunk is a URL
+        }
+      })
+      // urlstream.on("end", () => {
+        // if (!isSitemapIndex) outstream.end()
+      // })
     }).catch((err) => {
-      console.error("SAX ERROR", err.message)
+      console.error("RECURSIVE ERROR", err.message)
     })
   })
 }
@@ -64,43 +66,35 @@ const _get = async (url) => {
     let lastmod = null
     let text = ""
     
-    http.stream(url).then((stream) => {
+    http.stream(url).then((httpstream) => {
       const parser = sax.createStream(strict)
-      stream.pipe(parser)
-      // parser.on("pipe", () => {
-      //   console.log("parser piped")
-      // })
-      // parser.on("unpipe", () => {
-      //   console.log("parser unpiped")
-      // })
-      // parser.on("end", () => {
-      //   console.log("parser end")
-      // })
+      httpstream.pipe(parser)
+      const passthrough = stream.PassThrough()
+      resolve(passthrough)
       parser.on("opentag", (node) => {
+        if (node.name === "sitemapindex") {
+          passthrough.write(node.name)
+        }
       })
       parser.on("closetag", (name) => {
         if (name === "loc") {
           loc = text
         } else if (name === "lastmod") {
-          // const last = moment(text)
-          // const now = moment()
-          // if (now.diff(last, "years") < 1) {
-            lastmod = text
-          // }
+          lastmod = text
         } else if (name === "url") {
-          const url = {loc}
-          if (lastmod) url.lastmod = lastmod
-          urls.push(url)
+          if (passthrough.writableEnded) return
+          const obj = {loc}
+          if (lastmod) obj.lastmod = lastmod
+          passthrough.write(`${JSON.stringify(obj)}\n`)
         } else if (name === "sitemap") {
-          const sitemap = {loc}
-          if (lastmod) sitemap.lastmod = lastmod
-          sitemaps.push(loc)
+          if (passthrough.writableEnded) return
+          const obj = {loc}
+          if (lastmod) obj.lastmod = lastmod
+          passthrough.write(`${JSON.stringify(obj)}\n`)
         } else if (name === "urlset") {
-          // console.log(`URLSET with ${urls.length} URLS`)
-          resolve({urls})
+          passthrough.end()
         } else if (name === "sitemapindex") {
-          // console.log(`SITEMAPINDEX with ${sitemaps.length} sitemaps`)
-          resolve({sitemaps})
+          passthrough.end()
         }
         text = null
       })

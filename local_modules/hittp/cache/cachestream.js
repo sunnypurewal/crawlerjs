@@ -39,6 +39,8 @@ class CacheStream extends stream.Duplex {
             this.readOffset += obj.bytesRead
           }
         })
+      }).catch((err) => {
+        console.error("cachestream_read", err.message)
       })
     })
   }
@@ -64,8 +66,11 @@ class CacheStream extends stream.Duplex {
             let keepgoing = this.push(buffer)
             this.readOffset += obj.bytesRead
           }
+          // this.filehandle.close().then(callback)
           callback()
         })
+      }).catch((err) => {
+        console.error("cachestream_final", err.message)
       })
     })
   }
