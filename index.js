@@ -33,8 +33,8 @@ const main = async () => {
   }
   
   const random = Math.floor(Math.random() * urls.length-1)
-  // const url = http.str2url(urls[random])
-  const url = http.str2url("http://www.bbc.com/sitemap.xml")
+  const url = http.str2url(urls[random])
+  // const url = http.str2url("http://www.bbc.com/sitemap.xml")
   console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {

@@ -25,35 +25,33 @@ emitter.addListener("enqueue", () => {
 })
 
 emitter.addListener("requestend", (url) => {
-  console.log(requests.length, "requests", requests)
   const i = requests.findIndex((r) => {
-    return r.url.href == url.href
+    return r.href == url.href
   })
-  // console.log(`Requeste ended ${i} ${requests.length}`)
+  // console.log(`Request ended ${i} ${requests.length}`)
   if (i === -1) {
   } else {
     requests.splice(i, 1)
   }
   // console.log(requests.length)
-  dequeue()
+  dequeue(url)
 })
 
 emitter.addListener("requesterror", (err, url) => {
   const i = requests.findIndex((r) => {
-    r.url.href == url.href
+    return r.href == url.href
   })
   if (i === -1) {
   } else {
     requests.splice(i, 1)
   }
-  dequeue()
+  dequeue(url)
 })
 
 const delay = (params) => {
   console.log("Delaying domain", params.url.host)
   setTimeout(() => {
-    queue.push(params)
-    processQ()
+    enqueue(params)
   }, DOMAIN_DELAY)
 }
 
@@ -69,21 +67,30 @@ const dequeue = async (url=null) => {
     let nextobj = null
     let urlq = null
     if (url && queue.has(url.host)) {
-      console.log("Dequeueing same domain")
+      // console.log("Dequeueing same domain")
       urlq = queue.get(url.host)
       nextobj = urlq.shift()
       if (urlq.length > 0) queue.set(url.host, urlq)
       else queue.delete(url.host)
     } else {
-      console.log("Dequeuing different domain")
+      // console.log("Dequeuing different domain")
       const key = queue.keys().next().value
+      console.log("dq key", key)
       urlq = queue.get(key)
       nextobj = urlq.shift()
       if (urlq.length > 0) queue.set(key, urlq)
       else queue.delete(key)
     }
-    requests.push(nextobj)
-    getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
+    const hit = lasthit.get(nextobj.url.host) || 0
+    const timesince = Date.now() - hit
+    console.log(hit, timesince)
+    if (timesince < DOMAIN_DELAY) {
+      console.log("Delaying domain", nextobj.url.host, timesince)
+      delay(nextobj)
+    } else {
+      requests.push(nextobj.url)
+      getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
+    }
   } else {
     console.log("http queue is empty")
   }
@@ -115,13 +122,6 @@ const getstream = async (url, promise=null) => {
       }
     })
     const h = url.protocol.indexOf("https") != -1 ? https : http
-    // const hit = lasthit.get(url.host)
-    // const timesince = Date.now() - hit
-    // if (timesince < DOMAIN_DELAY) {
-      // delay({url, resolve, reject})
-      // console.log("Delaying domain", url.host, timesince)
-      // pushQ({url,resolve, reject})
-    // }
     console.log("http.stream ", url.href)
     const options = {host:url.host, path:url.pathname,timeout:10000}
     // const cachestream = new PassThrough()
@@ -129,7 +129,8 @@ const getstream = async (url, promise=null) => {
       // resolve(response.pipe(cachestream))
       console.log(res.statusCode, `${options.host}${options.path}`)
       if (res.statusCode >= 200 && res.statusCode <= 299) {
-        lasthit.set(options.host, Date.now())
+        lasthit.set(url.host, Date.now())
+        console.log(lasthit)
         const cachestream = new cache.CacheStream(url)
         resolve(res.pipe(cachestream))
         res.on("end", () => {
@@ -149,7 +150,7 @@ const getstream = async (url, promise=null) => {
           return
         }
       } else {
-        lasthit.set(options.host, Date.now())
+        lasthit.set(url.host, Date.now())
         emitter.emit("requesterror", new HTTPError(res.statusMessage), url)
         reject(new HTTPError(res.statusMessage))
       }
