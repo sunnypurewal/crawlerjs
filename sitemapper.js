@@ -86,12 +86,14 @@ const _get = async (url) => {
           if (passthrough.writableEnded) return
           const obj = {loc}
           if (lastmod) obj.lastmod = lastmod
-          passthrough.write(`${JSON.stringify(obj)}` + "\n")
+          passthrough.write(`${JSON.stringify(obj)}
+`)
         } else if (name === "sitemap") {
           if (passthrough.writableEnded) return
           const obj = {loc}
           if (lastmod) obj.lastmod = lastmod
-          passthrough.write(`${JSON.stringify(obj)}` + "\n")
+          passthrough.write(`${JSON.stringify(obj)}
+`)
         } else if (name === "urlset") {
           if (passthrough.writableEnded) return
           passthrough.end()
