@@ -55,37 +55,31 @@ const delay = (params) => {
   }, DOMAIN_DELAY)
 }
 
-const enqueue = async (obj) => {
+const enqueue = (obj) => {
   const url = obj.url
   if (!queue.has(url.host)) queue.set(url.host, [])
   queue.get(url.host).push(obj)
   emitter.emit("enqueue")
 }
 
-const dequeue = async (url=null) => {
+const dequeue = (url=null) => {
   if (queue.size > 0) {
     let nextobj = null
-    let urlq = null
+    let qkey = null
     if (url && queue.has(url.host)) {
-      // console.log("Dequeueing same domain")
-      urlq = queue.get(url.host)
-      nextobj = urlq.shift()
-      if (urlq.length > 0) queue.set(url.host, urlq)
-      else queue.delete(url.host)
+      qkey = url.host
     } else {
-      // console.log("Dequeuing different domain")
-      const key = queue.keys().next().value
-      console.log("dq key", key)
-      urlq = queue.get(key)
-      nextobj = urlq.shift()
-      if (urlq.length > 0) queue.set(key, urlq)
-      else queue.delete(key)
+      qkey = queue.keys().next().value
     }
+    const qvalue = queue.get(qkey)
+    nextobj = qvalue.shift()
+    if (qvalue.length > 0) queue.set(qkey, qvalue)
+    else queue.delete(qkey)
+
     const hit = lasthit.get(nextobj.url.host) || 0
     const timesince = Date.now() - hit
-    console.log(hit, timesince)
     if (timesince < DOMAIN_DELAY) {
-      console.log("Delaying domain", nextobj.url.host, timesince)
+      // console.log("Delaying domain", nextobj.url.host, timesince)
       delay(nextobj)
     } else {
       requests.push(nextobj.url)
