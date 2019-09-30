@@ -8,7 +8,6 @@ const stream = require("stream")
 
 const get = async (url) => {
   if (url.pathname.endsWith(".gz")) {
-    console.log("gz")
     url.pathname = url.pathname.slice(0, -3)
   }
   try {

@@ -33,19 +33,24 @@ const main = async () => {
   }
   
   const random = Math.floor(Math.random() * urls.length-1)
-  const url = http.str2url(urls[random])
+  // const url = http.str2url(urls[random])
   // const url = http.str2url("www.telegraph.co.uk/gardening/sitemap.xml")
-  console.log(url.href)
+  // console.log(url.href)
   // const stream = await http.stream(url)
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
-  try {
-    const file = fs.createWriteStream(`./data/${url.host}.urlset`)
-    const sitemapstream = await sitemapper.get(url)
-    sitemapstream.pipe(file)
-  } catch (err) {
-    console.error("index.js", err)
+  urls = urls.slice(random, random+10)
+  for (let url of urls) {
+    url = http.str2url(url)
+    try {
+      const file = fs.createWriteStream(`./data/${url.host}.urlset`)
+      sitemapper.get(url).then((sitemapstream) => {
+        sitemapstream.pipe(file)
+      })
+    } catch (err) {
+      console.error("index.js", err)
+    }
   }
 }
 

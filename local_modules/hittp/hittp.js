@@ -15,9 +15,9 @@ const requests = []
 const DOMAIN_DELAY = 2000
 const lasthit = new Map()
 http.globalAgent.maxSockets = MAX_CONNECTIONS
-// http.globalAgent.keepAlive = true
+http.globalAgent.keepAlive = true
 https.globalAgent.maxSockets = MAX_CONNECTIONS
-// https.globalAgent.keepAlive = true
+https.globalAgent.keepAlive = true
 
 emitter.addListener("enqueue", (url) => {
   if (requests.filter((r) => {
@@ -88,8 +88,9 @@ emitter.addListener("requesterror", (err, url) => {
   }
 })
 
-const delay = (params) => {
-  // console.log("delaying domain", params.url.host)
+const delay = async (params) => {
+  const howmany = queue.get(params.url.host).length
+  console.log("delaying domain", params.url.host, howmany, queue.size)
   setTimeout(() => {
     enqueue(params)
   }, DOMAIN_DELAY)
@@ -156,7 +157,7 @@ const getstream = async (url, promise=null, redirCount=0) => {
     }
     cache.getstream(url).then((cached) => {
       if (cached) {
-        console.log("http.stream.cached", url.href)
+        // console.log("http.stream.cached", url.href)
         resolve(cached)
         emitter.emit("requestend", url)
       } else {
@@ -166,8 +167,8 @@ const getstream = async (url, promise=null, redirCount=0) => {
           return
         }
         const h = url.protocol.indexOf("https") != -1 ? https : http
-        console.log("http.stream ", url.href)
-        const options = {host:url.host, path:url.pathname,timeout:10000}
+        // console.log("http.stream ", url.href)
+        const options = {host:url.host, path:url.pathname,timeout:3000}
         // const cachestream = new PassThrough()
         const req = h.request(options, (res) => {
           // resolve(response.pipe(cachestream))
