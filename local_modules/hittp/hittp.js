@@ -6,143 +6,108 @@ const cache = require("./cache/cache")
 const urlparse = require("./urlparse")
 const EventEmitter = require("events")
 const emitter = new EventEmitter()
+const queue = require("./queue")
 
 cache.setPath("./.cache")
-const queue = new Map()
 const MAX_CONNECTIONS = 1
 const MAX_CONNECTIONS_PER_DOMAIN = 1
 const requests = []
 const DOMAIN_DELAY = 2000
 const lasthit = new Map()
 http.globalAgent.maxSockets = MAX_CONNECTIONS
-http.globalAgent.keepAlive = true
+// http.globalAgent.keepAlive = true
 https.globalAgent.maxSockets = MAX_CONNECTIONS
-https.globalAgent.keepAlive = true
+// https.globalAgent.keepAlive = true
 
-emitter.addListener("enqueue", (url) => {
-  if (requests.filter((r) => {
-    return r.host == url.host
-  }).length > MAX_CONNECTIONS_PER_DOMAIN) {
-    // console.log("TOO MANY CXNS ON THIS DOMAIN")
-    return
-  }
-  if (requests.length < MAX_CONNECTIONS) {
-    dequeue()
-  } else {
-    // console.log("TOO MANY CONNECTIONS")
-  }
+queue.on("dequeue", (obj) => {
+  getstream(obj.url, {resolve:obj.resolve,reject:obj.reject})
 })
 
-emitter.addListener("requestend", (url) => {
-  // console.log("request end", url.href)
-  const i = requests.findIndex((r) => {
-    // console.log(r.href, url.href)
-    return r.href == url.href
-  })
-  // console.log(i)
-  if (i === -1) {
-  } else {
-    requests.splice(i, 1)
-  }
-  const connectioncount = requests.filter((r) => {
-    return r.host == url.host
-  }).length
-
-  // console.log("DOMAIN CXN COUNT ", connectioncount)
-
-  if (requests.filter((r) => {
-    return r.host == url.host
-  }).length > MAX_CONNECTIONS_PER_DOMAIN) {
-    return
-  }
-  // console.log(requests)
-  if (requests.length < MAX_CONNECTIONS) {
-    dequeue(url)
-  } else {
-    // console.log("TOO MANY CONNECTIONS")
-  }
+queue.on("enqueued", (obj) => {
+  console.log("hittp enqueued ", obj.url.href)
 })
 
-emitter.addListener("requesterror", (err, url) => {
-  // console.log("request error", err)
-  const i = requests.findIndex((r) => {
-    return r.href == url.href
-  })
-  if (i === -1) {
-  } else {
-    requests.splice(i, 1)
-  }
-  const connectioncount = requests.filter((r) => {
-    return r.host == url.host
-  }).length
+// emitter.addListener("enqueue", (url) => {
+//   if (requests.filter((r) => {
+//     return r.host == url.host
+//   }).length > MAX_CONNECTIONS_PER_DOMAIN) {
+//     // console.log("TOO MANY CXNS ON THIS DOMAIN")
+//     return
+//   }
+//   if (requests.length < MAX_CONNECTIONS) {
+//     dequeue()
+//   } else {
+//     // console.log("TOO MANY CONNECTIONS")
+//   }
+// })
 
-  // console.log("DOMAIN CXN COUNT ", connectioncount)
+// emitter.addListener("requestend", (url) => {
+//   // console.log("request end", url.href)
+//   const i = requests.findIndex((r) => {
+//     // console.log(r.href, url.href)
+//     return r.href == url.href
+//   })
+//   // console.log(i)
+//   if (i === -1) {
+//   } else {
+//     requests.splice(i, 1)
+//   }
+//   const connectioncount = requests.filter((r) => {
+//     return r.host == url.host
+//   }).length
 
-  if (requests.filter((r) => {
-    return r.host == url.host
-  }).length > MAX_CONNECTIONS_PER_DOMAIN) {
-    return
-  }
-  if (requests.length < MAX_CONNECTIONS) {
-    dequeue(url)
-  }
-})
+//   // console.log("DOMAIN CXN COUNT ", connectioncount)
 
-const delay = async (params) => {
-  const howmany = queue.get(params.url.host).length
-  console.log("delaying domain", params.url.host, howmany, queue.size)
-  setTimeout(() => {
-    enqueue(params)
-  }, DOMAIN_DELAY)
-}
+//   if (requests.filter((r) => {
+//     return r.host == url.host
+//   }).length > MAX_CONNECTIONS_PER_DOMAIN) {
+//     return
+//   }
+//   // console.log(requests)
+//   if (requests.length < MAX_CONNECTIONS) {
+//     dequeue(url)
+//   } else {
+//     // console.log("TOO MANY CONNECTIONS")
+//   }
+// })
 
-const enqueue = (obj) => {
-  const url = obj.url
-  if (!queue.has(url.host)) queue.set(url.host, [])
-  queue.get(url.host).push(obj)
-  // console.log("enqueued", url.href)
-  emitter.emit("enqueue", url)
-}
+// emitter.addListener("requesterror", (err, url) => {
+//   // console.log("request error", err)
+//   const i = requests.findIndex((r) => {
+//     return r.href == url.href
+//   })
+//   if (i === -1) {
+//   } else {
+//     requests.splice(i, 1)
+//   }
+//   const connectioncount = requests.filter((r) => {
+//     return r.host == url.host
+//   }).length
 
-const dequeue = (url=null) => {
-  if (queue.size > 0) {
-    let nextobj = null
-    let qkey = null
-    if (url && queue.has(url.host)) {
-      qkey = url.host
-    } else {
-      qkey = queue.keys().next().value
-    }
-    const qvalue = queue.get(qkey)
-    nextobj = qvalue.shift()
-    if (qvalue.length > 0) queue.set(qkey, qvalue)
-    else queue.delete(qkey)
-    
-    let connectioncount = requests.filter((r) => {
-      return r.host == nextobj.url.host
-    }).length
+//   // console.log("DOMAIN CXN COUNT ", connectioncount)
 
-    const hit = lasthit.get(nextobj.url.host) || 0
-    const timesince = Date.now() - hit
-    if (timesince < DOMAIN_DELAY) {// && connectioncount >= MAX_CONNECTIONS_PER_DOMAIN) {
-      // console.log("Delaying domain", nextobj.url.host, timesince)
-      delay(nextobj)
-    } else {
-      connectioncount = requests.filter((r) => {
-        return r.host == nextobj.url.host
-      }).length
-      // console.log("PUSHED CXN COUNT ", connectioncount)
-      getstream(nextobj.url, {resolve:nextobj.resolve,reject:nextobj.reject})
-    }
-  } else {
-    console.log("http queue is empty")
-  }
-}
+//   if (requests.filter((r) => {
+//     return r.host == url.host
+//   }).length > MAX_CONNECTIONS_PER_DOMAIN) {
+//     return
+//   }
+//   if (requests.length < MAX_CONNECTIONS) {
+//     dequeue(url)
+//   }
+// })
+
+// const delay = async (params) => {
+//   const howmany = queue.get(params.url.host).length
+//   console.log("delaying domain", params.url.host, howmany, queue.size)
+//   setTimeout(() => {
+//     queue.enqueue(params)
+//   }, DOMAIN_DELAY)
+// }
 
 const stream = async (url) => {
   return new Promise((resolve, reject) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
-    enqueue({url, resolve, reject})
+    queue.enqueue({url, resolve, reject})
     // getstream(url).then((stream) => {
     //   resolve(stream)
     // })
@@ -157,7 +122,7 @@ const getstream = async (url, promise=null, redirCount=0) => {
     }
     cache.getstream(url).then((cached) => {
       if (cached) {
-        // console.log("http.stream.cached", url.href)
+        console.log("http.stream.cached", url.href)
         resolve(cached)
         emitter.emit("requestend", url)
       } else {
@@ -167,7 +132,7 @@ const getstream = async (url, promise=null, redirCount=0) => {
           return
         }
         const h = url.protocol.indexOf("https") != -1 ? https : http
-        // console.log("http.stream ", url.href)
+        console.log("http.stream ", url.href)
         const options = {host:url.host, path:url.pathname,timeout:3000}
         // const cachestream = new PassThrough()
         const req = h.request(options, (res) => {
@@ -192,7 +157,7 @@ const getstream = async (url, promise=null, redirCount=0) => {
               console.log("Redirecting to ", location)
               // const obj = {url: urlparse.parse(location), resolve, reject}
               // emitter.emit("requestend", obj.url)
-              // enqueue(obj)
+              // queue.enqueue(obj)
               const newurl = urlparse.parse(location)
               requests.forEach((r, i, arr) => {
                 if (r.href == url.href) arr[i] = newurl
