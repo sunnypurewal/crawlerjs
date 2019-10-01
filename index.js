@@ -32,7 +32,7 @@ const main = async () => {
     }
   }
   
-  const random = Math.floor(Math.random() * urls.length-1)
+  // const random = Math.floor(Math.random() * urls.length-1)
   // const url = http.str2url(urls[random])
   // const url = http.str2url("www.telegraph.co.uk/gardening/sitemap.xml")
   // console.log(url.href)
@@ -40,7 +40,13 @@ const main = async () => {
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
-  urls = urls.slice(random, random+10)
+  // urls = urls.slice(random, random+10)
+  let hosts = []
+  for (let url of urls) {
+    url = http.str2url(url)
+    if (!hosts.includes(url.host)) hosts.push(url.host)
+  }
+  // console.log(hosts.length, "hosts being queried for", urls.length, "sitemap urls")
   for (let url of urls) {
     url = http.str2url(url)
     try {
