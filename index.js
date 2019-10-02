@@ -1,10 +1,10 @@
 'use strict'
 const discovery = require("./urldiscovery/urldiscovery")
 const robotsdottxt = require("robotsdottxt")
-const jsonfile = require("jsonfile")
 const http = require("hittp")
-const sitemapper = require("./sitemapper")
+const sitemapper = require("sitemapper")
 const fs = require("fs")
+const fspromises = fs.promises
 
 const main = async () => {
   // let urls = await discovery.fromJSON("./.data/domains.json")
@@ -14,7 +14,8 @@ const main = async () => {
   // const bots = await robotsdottxt.run(urls)
   // console.log(`Writing out ${bots.length} robots to JSON`)
   // jsonfile.writeFileSync("./.data/robots.json", bots)
-  let robots = await jsonfile.readFile("./data/robots.json")
+  let robots = await fspromises.readFile("./data/robots.json")
+  robots = JSON.parse(robots)
   // const random = Math.floor(Math.random() * robots.length-1)
   // robots = robots.slice(random, random+50)
   // const urls = ["https://www.courierpress.com/news-sitemap.xml"]
@@ -41,32 +42,16 @@ const main = async () => {
   //   console.log("Got data", chunk)
   // })
   // urls = urls.slice(random, random+2)
-  urls = ["https://www.foreignpolicy.com/sitemap.xml"]
-  for (let url of urls) {
-    url = http.str2url(url)
-  }
+  // urls = ["https://www.foreignpolicy.com/sitemap.xml"]
+  // for (let url of urls) {
+  //   url = http.str2url(url)
+  // }
   for (let url of urls) {
     url = http.str2url(url)
     try {
       const file = fs.createWriteStream(`./data/urlsets/${url.host}.urlset`, )
-      file.on("pipe", () => {
-        // console.log("urlset file piped", url.href)
-      })
-      file.on("unpipe", () => {
-        // console.log("urlset file unpiped", url.href)
-      })
-      file.on("close", () => {
-        // console.log("urlset file closed", url.href)
-      })
       file.on("ready", () => {
         sitemapper.get(url).then((sitemapstream) => {
-          // sitemapstream.on("end", () => {
-            // console.log("sitemap stream ended", url.href)
-            // file.end()
-          // })
-          sitemapstream.on("close", () => {
-            console.log("sitemap stream closed", url.href)
-          })
           sitemapstream.pipe(file)
         })
       })

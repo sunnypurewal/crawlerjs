@@ -7,18 +7,9 @@ const urlparse = require("./urlparse")
 const queue = require("./queue")
 
 cache.setPath("./.cache")
-const MAX_CONNECTIONS = 2
-http.globalAgent.maxSockets = MAX_CONNECTIONS
-// http.globalAgent.keepAlive = true
-https.globalAgent.maxSockets = MAX_CONNECTIONS
-// https.globalAgent.keepAlive = true
 
 queue.on("dequeue", (obj) => {
   getstream(obj.url, {resolve:obj.resolve,reject:obj.reject})
-})
-
-queue.on("enqueued", (obj) => {
-  // console.log("hittp enqueued ", obj.url.href)
 })
 
 const stream = async (url) => {
@@ -26,13 +17,8 @@ const stream = async (url) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.getstream(url).then((cached) => {
       if (cached) {
-        // console.log("http.stream.cached", url.href)
-        cached.on("close", () => {
-          console.log("cache stream closed")
-        })
         resolve(cached)
       } else {
-        // resolve(null)
         queue.enqueue({url, resolve, reject})
       }
     })
@@ -55,7 +41,6 @@ const getstream = async (url, promise=null, redirCount=0) => {
     if (url.search.length > 0) {
       options.path = `${options.path}${url.search}`
     }
-    console.log(options)
     const req = h.request(options, (res) => {
       console.log(res.statusCode, `${options.host}${options.path}`)
       if (res.statusCode >= 200 && res.statusCode <= 299) {

@@ -3,7 +3,6 @@
 const http = require("hittp")
 const sax = require("sax"),
   strict = true
-const moment = require("moment")
 const stream = require("stream")
 
 class SitemapStream extends stream.Readable {
@@ -43,20 +42,9 @@ const _getRecursive = async (url, outstream=null, streamcount=1) => {
           isSitemapIndex = true
         } else if (isSitemapIndex) {
           const chunkobj = JSON.parse(chunkstring)
-          // console.log("got sitemap from index", url.href, chunkobj.loc)
-          if (chunkobj.lastmod) {
-            const now = moment()
-            const then = moment(chunkobj.lastmod)
-            if (now.diff(then, "months") < 3) {
-              streamcount += 1
-              const locurl = http.str2url(chunkobj.loc)
-              _getRecursive(locurl, outstream, streamcount)
-            }
-          } else {
-            streamcount += 1
-            const locurl = http.str2url(chunkobj.loc)
-            _getRecursive(locurl, outstream, streamcount)
-          }
+          //TODO: check chunkobj.lastmod
+          const locurl = http.str2url(chunkobj.loc)
+          _getRecursive(locurl, outstream, streamcount)
           //chunk is a sitemap
         } else {
           outstream.write(chunk)
@@ -65,7 +53,6 @@ const _getRecursive = async (url, outstream=null, streamcount=1) => {
       })
       urlstream.on("close", () => {
         streamcount -= 1
-        console.log("urlstream closed", url.href)
         if (streamcount === 0) {
           outstream.destroy()
         }
@@ -140,9 +127,6 @@ const _get = async (url) => {
   })
 }
 
-const sleep = (ms) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 module.exports = {
   get
 }

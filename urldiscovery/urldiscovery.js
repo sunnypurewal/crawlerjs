@@ -1,10 +1,11 @@
 'use strict'
 
-const jsonfile = require("jsonfile")
+const fspromises = require("fs").promises
 
 const fromJSON = async (filename) => {
   try {
-    const obj = await jsonfile.readFile(filename)
+    const obj = await fspromises.readFile(filename)
+    obj = JSON.parse(obj)
     const domains = []
     const categories = Object.keys(obj)
     for (const cat of categories) {

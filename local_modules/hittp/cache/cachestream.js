@@ -46,20 +46,6 @@ class CacheStream extends stream.Duplex {
   }
 
   _read = (size) => {
-    // this.getFilehandle().whenever((err, filehandle) => {
-    //   this.filehandle.stat().then((stats) => {
-    //     size = Math.max(0, stats.size - this.readOffset)
-    //     const buffer = Buffer.allocUnsafe(size)
-    //     this.filehandle.read(buffer, 0, size, this.readOffset).then((obj) => {
-    //       if (obj.bytesRead) {
-    //         let keepgoing = this.push(buffer)
-    //         this.readOffset += obj.bytesRead
-    //       }
-    //     }).catch((err) => {
-    //       console.error("cachestream_read", err.message)
-    //     })
-    //   })
-    // })
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         size = Math.max(0, stats.size - this.readOffset)
@@ -75,15 +61,6 @@ class CacheStream extends stream.Duplex {
     })
   }
   _write = (chunk, encoding, callback) => {
-    // this.getFilehandle().whenever((err, filehandle) => {
-    //   try {
-    //     fspromises.appendFile(filehandle, chunk, {encoding}).then(() => {
-    //       callback()
-    //     })
-    //   } catch (err) {
-    //     callback(err)
-    //   }
-    // })
     this.getFileDescriptor().whenever((err, fd) => {
       fs.stat(this.filepath, (err, stats) => {
         const size = Math.max(0, stats.size - this.readOffset)
@@ -112,22 +89,6 @@ class CacheStream extends stream.Duplex {
         })
       })
     })
-    // this.getFilehandle().whenever((err, filehandle) => {
-    //   this.filehandle.stat().then((stats) => {
-    //     const size = Math.max(0, stats.size - this.readOffset)
-    //     const buffer = Buffer.allocUnsafe(size)
-    //     this.filehandle.read(buffer, 0, size, this.readOffset).then((obj) => {
-    //       if (obj.bytesRead) {
-    //         let keepgoing = this.push(buffer)
-    //         this.readOffset += obj.bytesRead
-    //       }
-    //       this.filehandle.close().then(callback)
-    //       callback()
-    //     })
-    //   }).catch((err) => {
-    //     console.error("cachestream_final", err.message)
-    //   })
-    // })
   }
 
   _destroy = (err, callback) => {
