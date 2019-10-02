@@ -12,8 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "hittp": "file:local_modules/hittp",
-    "robotsdottxt": "file:local_modules/robotsdottxt",
-    "sitemapper": "file:local_modules/sitemapper"
+    "getsitemap": "file:local_modules/getsitemap"
   },
   "devDependencies": {
     "@types/node": "^12.7.8"
