@@ -43,6 +43,9 @@ const getCacheFilename = (url) => {
   if (typeof(url) === "string") url = new URL(url)
   const hash = crypto.createHash("sha256")
   hash.update(url.pathname)
+  if (url.search.length > 0) {
+    hash.update(url.search)
+  }
   return hash.digest("hex")
 }
 
