@@ -11,15 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "future": "^2.3.1",
-    "he": "^1.2.0",
     "hittp": "file:local_modules/hittp",
     "robotsdottxt": "file:local_modules/robotsdottxt",
-    "sax": "^1.2.4",
     "sitemapper": "file:local_modules/sitemapper"
   },
   "devDependencies": {
-    "@types/node": "^12.7.8",
-    "nodemon": "^1.19.2"
+    "@types/node": "^12.7.8"
   }
 }

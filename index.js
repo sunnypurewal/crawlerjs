@@ -1,5 +1,5 @@
 'use strict'
-const discovery = require("./urldiscovery/urldiscovery")
+const discovery = require("sitemapper/urldiscovery")
 const robotsdottxt = require("robotsdottxt")
 const http = require("hittp")
 const sitemapper = require("sitemapper")
