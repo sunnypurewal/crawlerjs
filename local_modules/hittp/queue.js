@@ -5,7 +5,16 @@ const queue = new Map()
 let requests = 0
 const DOMAIN_DELAY_S = 3
 const DOMAIN_DELAY_MS = DOMAIN_DELAY_S * 1000
-const MAX_CONNECTIONS = 1
+const MAX_CONNECTIONS = 2
+
+setInterval(() => {
+  let c = 0
+  queue.forEach((value, key, map) => {
+    c += value.count
+  })
+  console.log(`Queue has ${c} values for ${queue.size} hosts`)
+  console.log("Requests count", requests)
+}, 3000)
 
 const on = (event, callback) => {
   if (event === "dequeue") {
@@ -31,12 +40,12 @@ const enqueue = (obj) => {
   const lastdq = qobj.lastdq || 0
 
   if (lastdq > 0 && count === 0) {
-    // console.log("Enqueuing", url.host, "for", DOMAIN_DELAY_MS - (Date.now() - lastdq), "ms")
+    console.log("Enqueuing", url.host, "for", DOMAIN_DELAY_MS - (Date.now() - lastdq), "ms")
     setTimeout(() => {
       dequeue(obj)
     }, DOMAIN_DELAY_MS - (Date.now() - lastdq))
   } else {
-    // console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
+    console.log("Enqueuing", url.host, "for", (count * DOMAIN_DELAY_MS), "ms")
     setTimeout(() => {
       dequeue(obj)
     }, DOMAIN_DELAY_MS * count)
@@ -49,7 +58,7 @@ const enqueue = (obj) => {
   queue.forEach((value, key, map) => {
     c += value.count
   })
-  console.log("Queue has values: ", c)
+  // console.log("Queue has values: ", c)
   // console.log("queue has", queue.size, "hosts")
 }
 

@@ -40,19 +40,35 @@ const main = async () => {
   // stream.on("data", (chunk) => {
   //   console.log("Got data", chunk)
   // })
-  // urls = urls.slice(random, random+10)
-  let hosts = []
+  // urls = urls.slice(random, random+2)
+  urls = ["https://www.foreignpolicy.com/sitemap.xml"]
   for (let url of urls) {
     url = http.str2url(url)
-    if (!hosts.includes(url.host)) hosts.push(url.host)
   }
-  // console.log(hosts.length, "hosts being queried for", urls.length, "sitemap urls")
   for (let url of urls) {
     url = http.str2url(url)
     try {
-      const file = fs.createWriteStream(`./data/${url.host}.urlset`)
-      sitemapper.get(url).then((sitemapstream) => {
-        sitemapstream.pipe(file)
+      const file = fs.createWriteStream(`./data/urlsets/${url.host}.urlset`, )
+      file.on("pipe", () => {
+        // console.log("urlset file piped", url.href)
+      })
+      file.on("unpipe", () => {
+        // console.log("urlset file unpiped", url.href)
+      })
+      file.on("close", () => {
+        // console.log("urlset file closed", url.href)
+      })
+      file.on("ready", () => {
+        sitemapper.get(url).then((sitemapstream) => {
+          // sitemapstream.on("end", () => {
+            // console.log("sitemap stream ended", url.href)
+            // file.end()
+          // })
+          sitemapstream.on("close", () => {
+            console.log("sitemap stream closed", url.href)
+          })
+          sitemapstream.pipe(file)
+        })
       })
     } catch (err) {
       console.error("index.js", err)

@@ -26,9 +26,13 @@ const stream = async (url) => {
     if (typeof(url) === "string") url = urlparse.parse(url)
     cache.getstream(url).then((cached) => {
       if (cached) {
-        console.log("http.stream.cached", url.href)
+        // console.log("http.stream.cached", url.href)
+        cached.on("close", () => {
+          console.log("cache stream closed")
+        })
         resolve(cached)
       } else {
+        // resolve(null)
         queue.enqueue({url, resolve, reject})
       }
     })
@@ -46,13 +50,18 @@ const getstream = async (url, promise=null, redirCount=0) => {
       return
     }
     const h = url.protocol.indexOf("https") != -1 ? https : http
-    console.log("http.stream ", url.href)
+    // console.log("http.stream ", url.href)
     const options = {host:url.host, path:url.pathname,timeout:3000}
+    if (url.search.length > 0) {
+      options.path = `${options.path}${url.search}`
+    }
+    console.log(options)
     const req = h.request(options, (res) => {
       console.log(res.statusCode, `${options.host}${options.path}`)
       if (res.statusCode >= 200 && res.statusCode <= 299) {
         const cachestream = new cache.CacheStream(url)
         resolve(res.pipe(cachestream))
+        queue.respond(url)
       } else if (res.statusCode >= 300 && res.statusCode <= 399) {
         const location = res.headers.location
         if (location) {
@@ -63,14 +72,17 @@ const getstream = async (url, promise=null, redirCount=0) => {
         }
       } else {
         reject(new HTTPError(res.statusMessage))
+        queue.respond(url)
       }
     })
     req.on("timeout", () => {
       req.abort()
       reject(new HTTPError("Timeout"))
+      queue.respond(url)
     })
     req.on("error", (err) => {
       reject(err)
+      queue.respond(url)
     })
     req.end()
   })

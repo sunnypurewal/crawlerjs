@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node .",
+    "start": "node . --http-parser=legacy",
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "nodemon ."
   },
@@ -13,6 +13,7 @@
   "dependencies": {
     "condition-variable": "^1.0.0",
     "future": "^2.3.1",
+    "he": "^1.2.0",
     "hittp": "file:local_modules/hittp",
     "jsonfile": "^5.0.0",
     "moment": "^2.24.0",

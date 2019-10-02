@@ -1,6 +1,7 @@
 'use strict'
 
 const url = require("url")
+const he = require("he")
 
 const parse = (string) => {
   let protocol = "http"
@@ -32,7 +33,7 @@ const parse = (string) => {
     path = path.slice(1)
   }
 
-  const url = new URL(`${protocol}://${host}${path}`)
+  const url = new URL(he.decode(`${protocol}://${host}${path}`))
   return url
 }
 
