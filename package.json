@@ -11,12 +11,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/jquery": "^3.3.31",
+    "@types/jsdom": "^12.2.4",
     "getsitemap": "^0.1.0",
     "hittp": "^0.1.0",
     "jquery": "^3.4.1",
     "jsdom": "^15.1.1"
   },
   "devDependencies": {
-    "@types/node": "^12.7.8"
+    "@types/node": "^12.7.8",
+    "nodemon": "^1.19.3"
   }
 }
