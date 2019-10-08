@@ -11,8 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hittp": "file:local_modules/hittp",
-    "getsitemap": "file:local_modules/getsitemap"
+    "getsitemap": "^0.1.0",
+    "hittp": "^0.1.0",
+    "jquery": "^3.4.1",
+    "jsdom": "^15.1.1"
   },
   "devDependencies": {
     "@types/node": "^12.7.8"

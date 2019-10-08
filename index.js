@@ -1,17 +1,32 @@
 'use strict'
-const getsitemap = require("getsitemap")
-const fs = require("fs")
-const fspromises = fs.promises
+const fs = require("fs").promises
+const hittp = require("hittp")
 
-const main = async () => {
-  let urls = await fspromises.readFile("./data/domains.json")
-  urls = JSON.parse(urls)
-  const random = Math.floor(Math.random() * urls.length-1)
-  const url = urls[random]
-  // const url = "desertsun.com"
-  const file = fs.createWriteStream(`./data/urlsets/${url}.urlset`)
-  const sitemapstream = await getsitemap.map(url)
-  sitemapstream.pipe(file)
+const { JSDOM } = require("jsdom")
+
+
+const scrape = (html) => {
+  const dom = new JSDOM(html)
+  const $ = (require("jquery"))(dom.window)
+  console.log($("window"))
+}
+
+const main = () => {
+  fs.readFile("./data/recent.urlset").then((buffer) => {
+    let urlstrings = buffer.toString().split("\n")
+    for (const urlstring of urlstrings) {
+      try {
+        const urlobj = JSON.parse(urlstring)
+        const loc = urlobj["loc"]
+        const url = hittp.str2url(loc)
+        if (!url) continue
+        
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  })
+
 }
 
 main()
