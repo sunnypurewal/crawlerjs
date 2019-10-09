@@ -12,15 +12,19 @@
   "license": "ISC",
   "dependencies": {
     "@elastic/elasticsearch": "^7.4.0",
-    "@types/jquery": "^3.3.31",
-    "@types/jsdom": "^12.2.4",
-    "getsitemap": "^0.1.0",
-    "hittp": "^0.1.0",
+    "elasticsearch-batch-stream": "^1.1.4",
+    "getsitemap": "file:./local_modules/getsitemap",
+    "hittp": "file:./local_modules/hittp",
     "jquery": "^3.4.1",
-    "jsdom": "^15.1.1"
+    "jsdom": "^15.1.1",
+    "through2": "^3.0.1",
+    "workerpool": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.7.8",
+    "@types/jquery": "^3.3.31",
+    "@types/jsdom": "^12.2.4",
+    "@types/through2": "^2.0.34",
+    "@types/node": "^12.7.12",
     "nodemon": "^1.19.3"
   }
 }

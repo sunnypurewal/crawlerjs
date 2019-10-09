@@ -5,7 +5,8 @@ const getMeta = (doc, name) => {
     for (const attr of meta.attributes) {
       if (attr.name === "property") {
         if (attr.value == name) {
-          return meta.attributes["content"].value
+          return getValue(meta)
+          // return meta.attributes["content"].value
         }
       }
     }
@@ -18,14 +19,14 @@ const getValue = (element) => {
     if (element.attributes["content"]) {
       return element.attributes["content"].value
     } else if (element.attributes["value"]) {
-      return element.attributes["value"]
+      return element.attributes["value"].value
     }
   }
   return null
 }
 
 const getType = (doc) => {
-  return getMeta(doc, "og:type")
+  return getMeta(doc, "og:type") || "other"
 }
 
 const getTimestamp = (doc) => {
