@@ -4,14 +4,79 @@ const hittp = require("hittp")
 const crypto = require("crypto")
 const DOC = require("./doc")
 const { JSDOM } = require("jsdom")
+const { Client } = require('@elastic/elasticsearch')
+const client = new Client({ node: 'http://localhost:9200' })
 
 const main = async () => {
+
+  await client.indices.delete({
+    index: "article",
+    ignoreUnavailable: true
+  })
+  let mapping = `
+  {
+    "index": "article",
+    "body": {
+      "settings": {
+        "number_of_replicas": 0,
+        "number_of_shards": 1
+      },
+      "mappings": {  
+        "properties": {
+          "author": {
+            "type": "text",
+            "index": false
+          },
+          "body": {
+            "type": "text"
+          },
+          "description": {
+            "type": "text"
+          },
+          "id": {
+            "type": "text"
+          },
+          "imgurl": {
+            "type": "text",
+            "index": false
+          },
+          "score": {
+            "type": "long",
+            "index": false
+          },
+          "type": {
+            "type": "keyword"
+          },
+          "tags": {
+            "type": "keyword"
+          },
+          "timestamp": {  
+            "type":"date",
+            "format":"epoch_second"
+          },
+          "title": {
+            "type":"text"
+          },
+          "url": {
+            "type":"text",
+            "index": false
+          }
+        }
+      }
+    }
+  }`
+  mapping = JSON.parse(mapping)
+  let create = await client.indices.create(mapping)
+  console.log(create.body)
+  let exists = await client.indices.exists({index:"article"})
+  console.log(exists.body)
   let urlstrings = null
+  let articlefile = null, otherfile = null, buffer = null
   try {
-    const articlefile = await fs.open("./data/items/article.jsonlines", "w")
+    articlefile = await fs.open("./data/items/article.jsonlines", "w")
     // const videofile = await fs.open("./data/items/videofile.jsonlines", "a+")
-    const otherfile = await fs.open("./data/items/other.jsonlines", "w")
-    const buffer = await fs.readFile("./data/recent.urlset")
+    otherfile = await fs.open("./data/items/other.jsonlines", "w")
+    buffer = await fs.readFile("./data/recent.urlset")
     urlstrings = buffer.toString().split("\n")
   } catch (err) {
     console.error(err)
@@ -21,25 +86,30 @@ const main = async () => {
     console.error("No URL strings")
     return
   }
+  // urlstrings = [`{"loc":"https://www.santacruzsentinel.com/2019/10/04/business-digest-dominican-hospital-family-reunion-set-on-sunday/"}`]
   for (const urlstring of urlstrings) {
     const urlobj = JSON.parse(urlstring)
     let url = hittp.str2url(urlobj["loc"])
     // url = hittp.str2url("https:/www.reuters.com/article/britain-stocks/growth-worries-brexit-woes-hit-ftse-100-gambling-stocks-rally-on-ma-news-idUSL3N26N1JX")
-    const doc = null
+    let doc = null
     try {
       const html = await hittp.get(url)
       const dom = new JSDOM(html)
       doc = dom.window.document
     } catch (err) {
+      console.error(err)
       continue
     }
     let item = new Item(url)
     item.type = DOC.getType(doc)
     if (item.type === "article" || item.type === "website") {
-      item = new Article(item)
+      item = new Article(url, item.id)
       const pElements = doc.querySelectorAll("p")
       for (const pElement of pElements) {
-        // item.addParagraph(pElement.textContent)
+        let content = pElement.textContent.trim()
+        if (content.length > 0) {
+          item.addParagraph(content)
+        }
       }
       item.title = DOC.getTitle(doc)
       const timestamp = DOC.getTimestamp(doc)
@@ -51,16 +121,20 @@ const main = async () => {
       const description = DOC.getDescription(doc)
       if (description) item.description = description
       const imgurl = DOC.getImage(doc)
-      if (imgurl) item.imgurl = hittp.str2url(imgurl)
-      const jsonstring = JSON.stringify(item)
-      await articlefile.writeFile(`${jsonstring}
-`)
-    } else {
-      const jsonstring = JSON.stringify(item)
+      if (imgurl) item.imgurl = hittp.str2url(imgurl).origin
       try {
-        await otherfile.writeFile(`${jsonstring}
-`)
+        let index = await client.index({id:item.id,index:"article",body:item})
+        console.log(index.body["_shards"].successful, item.id)
       } catch (err) {
+        console.error(err.body, item)
+        continue
+      }
+    } else {
+      try {
+        let index = await client.index({id:item.id,index:"article",body:JSON.stringify(item)})
+        console.log(index.body["_shards"].successful, item.id)
+      } catch (err) {
+        console.error(err)
         continue
       }
     }
@@ -97,12 +171,11 @@ const main = async () => {
 // if author is not None and len(author) > 0:
 //   item["author"] = author
 
-main()
 
 
 class Item {
   constructor(url, id=null, type=null) {
-    this.url = url
+    this.url = url.href
     if (!id) {
       const hash = crypto.createHash("sha256")
       hash.update(url.pathname)
@@ -110,24 +183,29 @@ class Item {
         hash.update(url.search)
       }
       this.id = hash.digest("hex")
+    } else {
+      this.id = id
     }
     this.type = type
   }
 }
 
 class Article extends Item {
-  constructor(item) {
-    super(item.url, item.id)
-    this.paragraphs = []
+  constructor(url, id) {
+    super(url, id)
+    this.body = null
     this.type = "article"
   }
   addParagraph(paragraph /*:string*/) {
-    this.paragraphs.push(paragraph)
+    if (this.body) {
+      this.body = this.body.concat("\n", paragraph)
+    } else {
+      this.body = paragraph
+    }
   }
   addParagraphs(paragraphs /*:array*/) {
     this.paragraphs.push(...paragraphs)
   }
-  toString() {
-    return this.paragraphs.join("\n")
-  }
 }
+
+main()

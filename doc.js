@@ -33,7 +33,7 @@ const getTimestamp = (doc) => {
   if (!element) element = getMeta(doc, "og:article:published_time")
   if (!element) element = getMeta(doc, "datePublished")
   if (!element) element = getMeta(doc, "timestamp")
-  return element
+  return Date.parse(element)
 }
 
 const getTitle = (doc) => {
