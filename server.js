@@ -30,7 +30,7 @@ fs.readFile("./data/domains.json", (err, data) => {
   let domains = JSON.parse(data.toString())
   let index = Math.floor(Math.random() * domains.length)
   let domain = domains[index]
-  // domain = "rollingstone.com"
+  // domain = "thebalance.com"
   console.log(domain)
   crawlDomain(`www.${domain}`, Date.parse("2019-10-05")).then((crawlstream) => {
     // res.sendStatus(200)
