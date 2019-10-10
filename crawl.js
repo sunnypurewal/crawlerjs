@@ -4,9 +4,12 @@ const getsitemap = require("getsitemap")
 const fs = require("fs")
 const bulk = require("./bulk")
 const os = require("os")
+// const workerpool = require('workerpool');
 
 const crawl = (domain, since) => {
-  return new Promise((resolve, reject) => {
+  console.log("Starting crawl", domain, since)
+  // return new Promise((resolve, reject) => {
+    if (!domain) return
     const mapper = new getsitemap.SiteMapper(false)
     mapper.map(domain, since).then((sitemapstream) => {
       const file = fs.createWriteStream(`./data/articles/${domain}.ndjson`)
@@ -33,11 +36,18 @@ const crawl = (domain, since) => {
         console.log("sitemapstream closed")
       })
     }).catch((err) => {
-      reject(err)
+      // reject(err)
     })
-  })
+  // })
 }
 
-module.exports = {
-  crawl
-}
+console.log(process.argv)
+crawl(process.argv[2], new Date(parseFloat(process.argv[3])))
+
+// workerpool.worker({
+//   crawl
+// })
+
+// module.exports = {
+//   crawl
+// }

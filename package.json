@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "crawl": "node crawl.js",
     "server": "node server.js",
     "ingest": "node ingest.js",
     "start": "node . --http-parser=legacy",
