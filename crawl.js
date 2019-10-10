@@ -3,10 +3,10 @@ const hittp = require("hittp")
 const getsitemap = require("getsitemap")
 const fs = require("fs")
 
-const crawl = (domain) => {
+const crawl = (domain, since) => {
   return new Promise((resolve, reject) => {
     const mapper = new getsitemap.SiteMapper()
-    mapper.map(domain, Date.parse("2019-10-05")).then((sitemapstream) => {
+    mapper.map(domain, since).then((sitemapstream) => {
       resolve(sitemapstream)
     }).catch((err) => {
       reject(err)
