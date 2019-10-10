@@ -6,7 +6,7 @@ const client = new Client({node: "http://127.0.0.1:9200"})
 
 let start = null, end = null, filecount = 0, linenums = []
 
-const ITERATIONS = 30
+const ITERATIONS = 39
 
 const ingestFile = (filename) => {
   const filestream = fs.createReadStream(filename)
@@ -25,9 +25,12 @@ const ingestFile = (filename) => {
         lastChunk = null
       }
       try {
-        const article = JSON.parse(jsonarticle)
-        articles.push({ "index" : { "_index" : "article", "_id" : article.id } })
-        articles.push(JSON.stringify(article))
+        let idindex = jsonarticle.indexOf(`"id":`) + 5
+        let id = jsonarticle.slice(idindex+1, jsonarticle.indexOf(",", idindex)-1)
+        // const article = JSON.parse(jsonarticle)
+        articles.push({ "index" : { "_index" : "article", "_id" : id } })
+        // articles.push(JSON.stringify(article))
+        articles.push(jsonarticle)
       } catch (err) {
         console.error(err.message, filename, lineNum)
       }
@@ -39,7 +42,6 @@ const ingestFile = (filename) => {
     }
     if (articles.length >= 500) {
       const body = articles.slice()
-      // body.map(v => console.log(v))
       articles = []
       client.bulk({body}, {}, (err, res) => {
         if (err) console.error(err.body)
@@ -52,17 +54,17 @@ const ingestFile = (filename) => {
   filestream.on("close", () => {
     if (articles.length > 0) {
       const body = articles.slice()
-      // body.map(v => console.log(v))
       articles = []
       client.bulk({body}, {}, (err, res) => {
         if (err) console.error(err.body)
-        console.log(res.body.statuscode, "elasticsearch bulk")
+        if (res.body.items.length != body.length/2) {
+          console.log("Didn't get all items", res.body.items.length, body.length/2)
+        }
       })
     }
     filecount++
     linenums.push(lineNum)
     if (filecount === ITERATIONS) {
-      console.log(linenums)
       let linecount = linenums.reduce((res, val) => {
         return res + val
       })
@@ -74,7 +76,7 @@ const ingestFile = (filename) => {
 
 const main = async () => {
   start = Date.now()
-  for (let i = 0; i < ITERATIONS; i++) {
+  for (let i = 39; i < 43; i++) {
     ingestFile(`./data/articles-${i}.ndjson`)
   }
 }
