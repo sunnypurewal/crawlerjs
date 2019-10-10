@@ -1,4 +1,5 @@
 'use strict'
+const stream = require("stream")
 const fss = require("fs")
 const fs = fss.promises
 const hittp = require("hittp")
@@ -8,7 +9,6 @@ const { Client } = require('@elastic/elasticsearch')
 const client = new Client({
   node: "http://localhost:9200"
 })
-const webstream = require("./webstream")
 
 const e = () => {
   return new Promise((resolve, reject) => { 
@@ -45,9 +45,8 @@ const main = async () => {
     console.error("No URL strings")
     return
   }
-  // const itemStream = new bulk.ItemStream()
-  // const elasticStream = new elastic.ElasticStream()
-  const file = fss.createWriteStream("./data/articles.jsonlines")
+  let i = 0
+  let items = []
   for (const urlstring of urlstrings) {
     if (urlstring.length === 0) continue
     let urlobj = null
@@ -58,44 +57,24 @@ const main = async () => {
       continue
     }
     let url = hittp.str2url(urlobj["loc"])
-    // try {
-      hittp.get(url).then((html) => {
-        const item = bulk.getItem(html, url)
-        file.write(`${JSON.stringify(item)}
-`)
-      }).catch((err) => {
-        console.error(err.message)
-      })
-      // const html = await hittp.get(url)
-      // const item = bulk.getItem(html, url)
-      // const resp = await client.index({id:item.id,index:"article",body:item})
-      // console.log(resp.body._shards.successful)
-    // } catch (err) {
-    //   console.error(err.body)
-    // }
-    // hittp.get(url).then((html) => {
-    //   // passthrough.write(html)
-    //   const item = bulk.getItem(html, url)
-    //   client.index({id:item.id,index:"article",body:item}, (err, resp) => {
-    //     if (err) console.error(err.body)
-    //     else console.log(resp.body)
-    //   })
-    //   // itemStream.write(url.href)
-    //   // itemStream.write(html)
-    // }).catch((err) => {
-    //   console.error(err.message)
-    // })
+    let html = null
+    try {
+      html = await hittp.get(url)
+    } catch (err) {
+      console.error(err.statusCode ? err.statusCode : "", err.message)
+      continue
+    }
+    const item = bulk.getItem(html, url)
+    items.push(JSON.stringify(item).replace("\n",""))
+    if (items.length >= 1000) {
+      await fs.writeFile(`./data/articles-${i}.ndjson`, items.join("\n"))
+      items = []
+      i += 1
+    }
   }
-  // itemStream.on("data", (chunk) => {
-  //   try { 
-  //     const item = JSON.parse(chunk.toString())
-  //   } catch (err) {
-  //     console.error(err)
-  //   }
-  // })
-  // itemStream.on("end", () => {
-  //   console.log("passthrough ended")
-  // })
+  if (items.length > 0) {
+    await fs.writeFile(`./data/articles-${i}.ndjson`, items.join("\n"))
+  }
 }
 
 main()

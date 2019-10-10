@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "ingest": "node ingest.js",
     "start": "node . --http-parser=legacy",
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "nodemon ."
