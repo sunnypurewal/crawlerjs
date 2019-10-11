@@ -117,28 +117,16 @@ span.table-header-text {
   font-weight: 600;
   padding: 0px;
 }
-td > a {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  margin: 1em 2em;
-}
 td {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  margin: 1em 2em;
+  color: #343434;
 }
-td > * {
+/* td > * {
   margin-top: auto;
   margin-bottom: auto;
-}
+} */
 th.table-header {
-  background-color: #232323;
+  background-color: #343434;
   color: #FCFCFC;
-  text-align: left;
 }
 th.table-footer {
   background-color: #F0F0F0;

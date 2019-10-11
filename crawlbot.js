@@ -20,7 +20,7 @@ module.exports = (options=defaultOptions) => {
   }));
   app.set('view engine', 'ejs');
   app.use(express.static('static'))
-  const forks = [{domain: "cnn.com", process: {pid: 5102}}]
+  const forks = []
 
   app.get('/', function (req, res) {
     res.render("index", {forks}, (err, html) => {
