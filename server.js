@@ -7,6 +7,7 @@ const fspromises = fs.promises
 const app = express()
 const { fork } = require("child_process")
 app.use(bodyParser.json());
+const hittp = require('hittp')
 
 app.post("/crawl", (req, res) => {
   // crawlDomain(req.body.domain, Date.parse("2019-10-05"))
@@ -27,7 +28,7 @@ app.listen(9999, "0.0.0.0", async () => {
   let domains = await fspromises.readFile("./data/domains.json")
   domains = JSON.parse(domains.toString())
   let index = Math.floor(Math.random() * domains.length)
-  domains = domains
+  domains = domains.reverse()
   // domains = ["www.ekathimerini.com", "www.independent.ie"]
   // let domain = domains[index]
   // domain = "thebalance.com"
@@ -36,7 +37,7 @@ app.listen(9999, "0.0.0.0", async () => {
   }
   let forks = []
   for (const domain of domains) {
-    while (forks.length > 10) {
+    while (forks.length >= 10) {
       await sleep(5000)
     }
     crawlDomain(`www.${domain}`, Date.parse("2019-10-05")).then((spawned) => {
@@ -45,7 +46,7 @@ app.listen(9999, "0.0.0.0", async () => {
         console.log("Received message from child", msg)
       })
       spawned.on("exit", (code, signal) => {
-        console.log("Child process exited", code, signal)
+        console.log("Finished crawling", domain)
         let index = -1
         for (let i = 0; i < forks.length; i++) {
           const fork = forks[i]

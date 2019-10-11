@@ -7,7 +7,7 @@ const os = require("os")
 // const workerpool = require('workerpool');
 
 const crawl = (domain, since) => {
-  console.log("Starting crawl", domain, since)
+  console.log("Crawling", domain)
   // return new Promise((resolve, reject) => {
     if (!domain) return
     const mapper = new getsitemap.SiteMapper(false)
@@ -33,15 +33,14 @@ const crawl = (domain, since) => {
         })
       })
       sitemapstream.on("close", () => {
-        console.log("sitemapstream closed")
+        // console.log("sitemapstream closed")
       })
     }).catch((err) => {
       // reject(err)
     })
   // })
-}
+} 
 
-console.log(process.argv)
 crawl(process.argv[2], new Date(parseFloat(process.argv[3])))
 
 // workerpool.worker({

@@ -20,7 +20,6 @@ class ElasticStream extends stream.Writable {
   _write = (chunk, enc, cb) => {
     const item = JSON.parse(chunk.toString())
     
-    console.log("_write")
     // let start = Date.now()
     let index = -1
     let array = []
