@@ -1,11 +1,12 @@
 'use strict'
-const stream = require("stream")
-const fss = require("fs")
-const fs = fss.promises
-const hittp = require("hittp")
-const bulk = require("./bulk")
-const elastic = require("./elastic")
-const { Client } = require('@elastic/elasticsearch')
-const client = new Client({
-  node: "http://localhost:9200"
+
+const Server = require("crawlbot-server")
+
+const server = new Server()
+
+server.onHTML = (html, url) => {
+}
+
+server.listen((options) => {
+  console.log(`Crawlbot Server started at ${options.host}:${options.port}`)
 })
