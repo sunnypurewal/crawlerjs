@@ -6,13 +6,12 @@ const bulk = require("./bulk")
 const os = require("os")
 // const workerpool = require('workerpool');
 
-const crawl = (domain, since) => {
+const crawl = (domain, since, parse) => {
   console.log("Crawling", domain)
   // return new Promise((resolve, reject) => {
     if (!domain) return
     const mapper = new getsitemap.SiteMapper(false)
     mapper.map(domain, since).then((sitemapstream) => {
-      const file = fs.createWriteStream(`./data/articles/${domain}.ndjson`)
       sitemapstream.on("data", (chunk) => {
         const chunkstring = chunk.toString()
         let chunkobj = null
@@ -26,8 +25,7 @@ const crawl = (domain, since) => {
         if (!url) return
         hittp.get(url).then((html) => {
           html = html.toString()
-          const item = bulk.getItem(html, url)
-          file.write(`${JSON.stringify(item).replace("\n"," ")}${os.EOL}`)
+          parse(html)
         }).catch((err) => {
           console.error(err.message)
         })
