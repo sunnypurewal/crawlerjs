@@ -16,9 +16,9 @@ const getMeta = (doc, name) => {
 const getValue = (element) => {
   if (element && element.attributes) {
     if (element.attributes["content"]) {
-      return element.attributes["content"].value
+      return element.attributes["content"].value.trim()
     } else if (element.attributes["value"]) {
-      return element.attributes["value"].value
+      return element.attributes["value"].value.trim()
     }
   }
   return null
@@ -82,35 +82,33 @@ const getAuthor = (doc) => {
 }
 
 const getDescription = (doc) => {
-  let schema = getSchema(doc)
-  if (schema) {
-    let headline = schema["headline"]
-    if (headline) return headline
-  }
   let element = getMeta(doc, "og:description")
   if (!element) element = getMeta(doc, "description")
   if (!element) element = getMeta(doc, "article:description")
   if (!element) element = getMeta(doc, "og:article:description")
   if (element) return element
+  let schema = getSchema(doc)
+  if (schema) {
+    let description = schema["description"]
+    if (description) return description
+  }
   return null
 }
 
 const getKeywords = (doc) => {
-  let element = getMeta(doc, "og:keywords")
-  if (!element) element = getMeta(doc, "og:tag")
-  if (!element) element = getMeta(doc, "og:tags")
-  if (!element) element = getMeta(doc, "keywords")
-  if (!element) element = getMeta(doc, "og:article:keywords")
-  if (!element) element = getMeta(doc, "article:keywords")
-  if (!element) element = getMeta(doc, "tags")
-  if (!element) element = getMeta(doc, "tag")
-  let values = element
-  if (typeof(values) === "string") {
-    const keywords = []
-    keywords.push(...(values.split(",")))
-    return keywords
+  let keywords = []
+  const metas = doc.querySelectorAll("meta")
+  for (const meta of metas) {
+    for (const attr of meta.attributes) {
+      if (attr.name === "property") {
+        if (attr.value.toLowerCase().includes("tag") ||
+            attr.value.toLowerCase().includes("keyword")) {
+          keywords.push(getValue(meta))
+        }
+      }
+    }
   }
-  return null
+  return keywords.length > 0 ? keywords : null
 }
 
 const getImage = (doc) => {

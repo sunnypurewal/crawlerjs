@@ -1,0 +1,51 @@
+{
+  "index": "article",
+  "body": {
+    "settings": {
+      "number_of_replicas": 0,
+      "number_of_shards": 1
+    },
+    "mappings": {  
+      "properties": {
+        "author": {
+          "type": "text",
+          "index": false
+        },
+        "body": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "id": {
+          "type": "text"
+        },
+        "imgurl": {
+          "type": "text",
+          "index": false
+        },
+        "score": {
+          "type": "long",
+          "index": false
+        },
+        "type": {
+          "type": "keyword"
+        },
+        "tags": {
+          "type": "keyword"
+        },
+        "timestamp": {  
+          "type":"date",
+          "format":"epoch_second"
+        },
+        "title": {
+          "type":"text"
+        },
+        "url": {
+          "type":"text",
+          "index": false
+        }
+      }
+    }
+  }
+}
