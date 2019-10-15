@@ -29,7 +29,7 @@ const getItem = (html, url) => {
     const description = DOC.getDescription(doc)
     if (description) item.description = description
     const imgurl = DOC.getImage(doc)
-    if (imgurl) item.imgurl = hittp.str2url(imgurl).origin
+    if (imgurl) item.imgurl = hittp.str2url(imgurl).href
   }
   return item
 }
