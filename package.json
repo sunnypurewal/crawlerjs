@@ -15,6 +15,7 @@
     "crawlbot-server": "file:./local_modules/crawlbot-server",
     "getsitemap": "file:./local_modules/getsitemap",
     "hittp": "file:./local_modules/hittp",
+    "jquery": "^3.4.1",
     "jsdom": "^15.2.0",
     "knuth-shuffle": "^1.0.8"
   },
