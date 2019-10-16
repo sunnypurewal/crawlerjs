@@ -9,17 +9,28 @@ const fs = require("fs")
 const url = "https://www.cnn.com/2019/10/07/health/germs-home-wellness/index.html"
 // const url = "https://www.thestar.com/news/gta/2019/10/16/mayor-john-tory-throws-support-behind-ontario-line-in-deal-with-province-that-would-avoid-subway-upload.html"
 // const url = "https://www.scmp.com/week-asia/politics/article/3033238/hong-kongs-snowden-refugees-appeal-trudeau-ahead-canadian"
+// const url = "https://www.afp.com/fr/infos/334/f1-environnement-hamilton-attaque-lagriculture-et-se-prend-une-volee-de-bois-vert-doc-1lh1j62"
 
 const stopwords = JSON.parse(fs.readFileSync("./stopwords.json"))
 
 hittp.get(url).then((html) => {
   const dom = new JSDOM(html.toString())
   let body = dom.window.document.body
-  const map = new Map()
-  countClass(body, map)
-  for (const [k, v] of map) {
-    if (v.length > 15) {
-      console.log(k, v)
+  const classmap = new Map()
+  body = getArticleNode(body) || body
+  countClass(body, classmap)
+  console.log("CLASSES")
+  for (const [k, v] of classmap) {
+    if (v.length > 5) {
+      // console.log(k, v)
+    }
+  }
+  const tagmap = new Map()
+  countTag(body, tagmap)
+  console.log("TAGS")
+  for (const [k, v] of tagmap) {
+    if (v.length > 5) {
+      // console.log(k, v)
     }
   }
 })
@@ -34,85 +45,61 @@ const getStopWordCount = (string) => {
   return stopwordCount
 }
 
+const BAD_TAGS = ["A", "SCRIPT", "UL", "OL", "LI", "NOSCRIPT", "META"]
+const isParagraph = (element) => {
+  if (BAD_TAGS.includes(element.tagName.toUpperCase())) return false
+  if (getStopWordCount(element.textContent) < 3) return false
+  if (element.className.includes("js-gallery-aspect-ratio-wrapper")) {
+    console.log(element.textContent)
+    // console.log(element.innerHTML)
+  }
+  const htmlLength = element.innerHTML.length
+  const textLength = element.textContent.length
+  const diff = htmlLength - textLength
+  if (diff > 10) return false
+  
+  return true
+}
+
+const getArticleNode = (body) => {
+  let article = body.querySelector("article")
+  if (article) return article
+  article = body.querySelector("[itemprop='articleBody']")
+  if (article) return article
+  article = body.querySelector(".article_content")
+  if (article) return article
+}
+
+const countTag = (body, map) => {
+  const children = body.children
+  for (const child of children) {
+    if (!child.tagName) continue
+    const text = child.textContent
+    if (isParagraph(child)
+    ) {
+      const elements = map.get(child.tagName) || []
+      elements.push(child.textContent)
+      map.set(child.tagName, elements)
+    }
+    if (!["UL", "A", "OL", "SCRIPT", "NOSCRIPT", "FOOTER", "HEADER"].includes(child.tagName)) countTag(child, map)
+  }
+}
+
 const countClass = (body, map) => {
   const children = body.children
   for (const child of children) {
-    if (["SCRIPT", "NOSCRIPT"].includes(child.parentNode.tagName)) continue
+    if (["SCRIPT", "NOSCRIPT"].includes(child.tagName)) continue
     const text = child.textContent
     const isParagraph = getStopWordCount(text) > 3
     if (isParagraph) {
       const classes = child.className.split(" ")
       for (const c of classes) {
+        if (c.length === 0) continue
         const elements = map.get(c) || []
         elements.push(child.textContent)
         map.set(c, elements)
       }
     }
     countClass(child, map)
-  }
-}
-
-const countChildren = (body, childrenMap) => {
-  let children = body.children
-  if (children.length >= 3
-    && !["UL", "OL", "A", "BODY"].includes(body.tagName)
-    ) {
-    childrenMap.set(body, children.length)
-  }
-  for (const child of children) {
-    countChildren(child, childrenMap)
-  }
-}
-
-const getText = (node, str="") => {
-  if (node.nodeType === 3
-    && !["A"].includes(node.parentNode.tagName)
-    && node.parentNode.children.length < 1
-    ) {
-    return str.concat(node.textContent).concat(os.EOL)
-  } else {
-    for (const child of node.childNodes) {
-      if (!["UL", "OL", "A", "BODY"].includes(body.tagName)) str = getText(child, str)
-    }
-    return str
-  }
-}
-
-const buildMap = (body, map) => {
-  const children = body.childNodes
-  const elements = map.get(body) || []
-  for (const child of children) {
-    if (child.tagName === "SCRIPT") continue
-    if (child.nodeType === 3
-      && ["DIV", "SPAN", "P"].includes(body.tagName)  
-      ) {
-      elements.push(child.textContent.trim())
-    } else {
-      buildMap(child, map)
-    }
-  }
-  map.set(body, elements)
-}
-
-const bfs = (body, depthMap) => {
-  const q = []
-  let depth = 0
-  q.push({depth, body})
-  let item = q.shift()
-  while (item !== undefined) {
-    const children = Array.from(item.body.children)
-    const depth = item.depth
-    q.push(...(children.map(c => {
-      return {depth:depth+1, body:c}
-    })))
-    const elements = depthMap.get(depth) || []
-    if (["DIV", "SPAN", "P"].includes(item.body.tagName) 
-    && item.body.textContent.length > 0
-    && item.body.children.length === 0
-    ) {
-      elements.push(item.body)
-    }
-    depthMap.set(depth, elements)
-    item = q.shift()
   }
 }
