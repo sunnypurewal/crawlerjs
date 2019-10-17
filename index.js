@@ -7,9 +7,11 @@ const hittp = require("hittp")
 const bulk = require("./bulk")
 const os = require("os")
 const shuffle = require('knuth-shuffle').knuthShuffle;
+const article = require("article")
 
 let forks = []
 const SINCE = "2019-10-16"
+const MAX_PROCESSES = os.cpus().length - 1
 
 const main = async () => {
   let data = null
@@ -25,18 +27,22 @@ const main = async () => {
   } catch (err) {
     throw err
   }
+  let domainList = []
+  let i = 1
+  const random = Math.floor(Math.random() * domains.length-1)
+  domains = domains.slice(random, random+2)
   for (const domain of domains) {
-    while (forks.length >= 25) {
+    while (forks.length >= MAX_PROCESSES) {
       await sleep(5000)
     }
     const url = hittp.str2url(domain)
     if (!url) continue
-    const filepath = `./data/articles/${url.host}.ndjson`
-    const file = fs.createWriteStream(filepath)
-    const forked = crawlbot.crawl(url, SINCE, (html, url) => {
+    domainList.push(url.href)
+    // if (domainList.length < 50) continue
+    const filepath = `./data/articles/batch-${i}.ndjson`
+    const forked = crawlbot.multicrawl(domainList, SINCE, (html, url) => {
       onHTML(html, url, file)
     }, (hosturl, proc, code, signal) => {
-      console.log("Finished crawling", hosturl.host)
       let index = -1
       for (let i = 0; i < forks.length; i++) {
         const fork = forks[i]
@@ -56,9 +62,9 @@ const main = async () => {
         console.error(err)
       })
     })
-    console.log("Crawling", url.host)
     forks.push(forked)
-    await sleep(1000)
+    domainList = []
+    i += 1
   }
 }
 
@@ -70,6 +76,15 @@ const onHTML = (html, url, writestream) => {
   } catch (err) {
     console.error(err)
   }
+}
+
+const partition = (array, numParts) => {
+  let size = Math.ceil(array.length / numParts)
+  let partitions = []
+  for (let i = 0; i < size; i++) {
+    partitions.push(array.slice(i*size, (i*size)+size))
+  }
+  return partitions
 }
 
 main()
