@@ -4,6 +4,7 @@ const stream = require("stream")
 const hittp = require("hittp")
 const DOC = require("./doc")
 const { JSDOM } = require("jsdom")
+const article = require("article")
 
 const getItem = (html, url) => {
   let options = {}

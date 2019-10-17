@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "article": "^1.1.2",
+    "cheerio": "^1.0.0-rc.3",
     "crawlbot": "file:./local_modules/crawlbot",
     "crawlbot-server": "file:./local_modules/crawlbot-server",
     "getsitemap": "file:./local_modules/getsitemap",
