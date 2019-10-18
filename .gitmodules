@@ -10,3 +10,6 @@
 [submodule "local_modules/getsitemap"]
 	path = local_modules/getsitemap
 	url = git@github.com:sunnypurewal/getsitemap
+[submodule "local_modules/readability"]
+	path = local_modules/readability
+	url = git@github.com:mozilla/readability

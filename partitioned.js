@@ -9,9 +9,8 @@ const os = require("os")
 const shuffle = require('knuth-shuffle').knuthShuffle;
 const article = require("article")
 
-let forks = []
 const SINCE = "2019-10-16"
-const MAX_PROCESSES = os.cpus().length - 1
+const MAX_PROCESSES = os.cpus().length
 
 const main = async () => {
   let data = null
