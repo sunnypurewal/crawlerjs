@@ -1,80 +1,94 @@
 'use strict'
-const stream = require("stream")
-const fss = require("fs")
-const fs = fss.promises
+
+const crawlbot = require("crawlbot")
+const fs = require("fs")
+const fspromises = fs.promises
 const hittp = require("hittp")
 const bulk = require("./bulk")
-const elastic = require("./elastic")
-const { Client } = require('@elastic/elasticsearch')
-const client = new Client({
-  node: "http://localhost:9200"
-})
+const os = require("os")
+const shuffle = require('knuth-shuffle').knuthShuffle;
+const article = require("article")
 
-const e = () => {
-  return new Promise((resolve, reject) => { 
-    client.indices.delete({
-      index: "article", 
-      ignoreUnavailable: true
-    }, (err, resp, status) => {
-      console.log("Deleted old index", resp.body)
-      fs.readFile("./mapping.json").then((mapping) => {
-        mapping = JSON.parse(mapping.toString())
-        client.indices.create(mapping, ((err, resp, status) => {
-          console.log("Created new index", resp.body)
-          resolve(true)
-        }))
-      })
-    })
-  })
-}
+let forks = []
+const SINCE = "2019-10-16"
+const MAX_PROCESSES = os.cpus().length - 1
 
 const main = async () => {
-  await e()
-  let urlstrings = null
-  let buffer = null
+  let data = null
   try {
-    buffer = await fs.readFile("./data/recent.urlset")
-    if (buffer) {
-      urlstrings = buffer.toString().split("\n")
+    data = await fspromises.readFile("./data/domains.json")
+  } catch (err) {
+    throw err
+  }
+  let domains = []
+  try {
+    domains = JSON.parse(data.toString())
+    shuffle(domains)
+  } catch (err) {
+    throw err
+  }
+  let domainList = []
+  let i = 1
+  const random = Math.floor(Math.random() * domains.length-1)
+  domains = domains.slice(random, random+2)
+  for (const domain of domains) {
+    while (forks.length >= MAX_PROCESSES) {
+      await sleep(5000)
     }
+    const url = hittp.str2url(domain)
+    if (!url) continue
+    domainList.push(url.href)
+    // if (domainList.length < 50) continue
+    const filepath = `./data/articles/batch-${i}.ndjson`
+    const forked = crawlbot.multicrawl(domainList, SINCE, (html, url) => {
+      onHTML(html, url, file)
+    }, (hosturl, proc, code, signal) => {
+      let index = -1
+      for (let i = 0; i < forks.length; i++) {
+        const fork = forks[i]
+        if (fork.pid == proc.pid) {
+          index = i
+          break
+        }
+      }
+      if (index !== -1) forks.splice(index, 1)
+      file.close()
+      fspromises.stat(filepath).then((stats) => {
+        if (stats.size === 0) {
+          fspromises.unlink(filepath).then(() => {
+          })
+        }
+      }).catch((err) => {
+        console.error(err)
+      })
+    })
+    forks.push(forked)
+    domainList = []
+    i += 1
+  }
+}
+
+const onHTML = (html, url, writestream) => {
+  try {
+    let item = bulk.getItem(html, url)
+    let itemstring = JSON.stringify(item).replace("\n"," ")
+    writestream.write(`${itemstring}${os.EOL}`)
   } catch (err) {
     console.error(err)
-    return
   }
-  if (!urlstrings || urlstrings.length === 0) {
-    console.error("No URL strings")
-    return
+}
+
+const partition = (array, numParts) => {
+  let size = Math.ceil(array.length / numParts)
+  let partitions = []
+  for (let i = 0; i < size; i++) {
+    partitions.push(array.slice(i*size, (i*size)+size))
   }
-  let i = 0
-  let items = []
-  for (const urlstring of urlstrings) {
-    if (urlstring.length === 0) continue
-    let urlobj = null
-    try {
-      urlobj = JSON.parse(urlstring)
-    } catch (err) {
-      console.error("Failed to parse urlobj")
-      continue
-    }
-    let url = hittp.str2url(urlobj["loc"])
-    let html = null
-    try {
-      html = await hittp.get(url)
-    } catch (err) {
-      console.error(err.statusCode ? err.statusCode : "", err.message)
-      continue
-    }
-    const item = bulk.getItem(html, url)
-    items.push(JSON.stringify(item).replace("\n",""))
-    if (items.length >= 1000) {
-      await fs.writeFile(`./data/articles-${i}.ndjson`, items.join("\n"))
-      items = []
-      i += 1
-    }
-  }
-  if (items.length > 0) {
-    await fs.writeFile(`./data/articles-${i}.ndjson`, items.join("\n"))
-  }
+  return partitions
 }
 
 main()
+
+const sleep = (ms) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

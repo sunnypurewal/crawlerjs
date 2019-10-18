@@ -4,9 +4,13 @@ const stream = require("stream")
 const hittp = require("hittp")
 const DOC = require("./doc")
 const { JSDOM } = require("jsdom")
+const article = require("article")
 
 const getItem = (html, url) => {
-  const dom = new JSDOM(html)
+  let options = {}
+  let parsedurl = hittp.str2url(url)
+  if (parsedurl) options.url = parsedurl.origin
+  const dom = new JSDOM(html, options)
   let doc = dom.window.document
   let item = new Item(url)
   item.type = DOC.getType(doc)
