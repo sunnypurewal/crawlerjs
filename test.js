@@ -10,12 +10,27 @@ const DOMAINS = [
   "independent.co.uk","telegraph.co.uk","dfl.org","democrats.org","defense.gov","gop.com","gp.org","lp.org","nasa.gov","nrcc.org","dccc.org","nrsc.org","whitehouse.gov","ed.gov","energy.gov","justice.gov","dol.gov","state.gov","transportation.gov","epa.gov"
 ]
 
-const random = Math.floor(Math.random() * DOMAINS.length)
-let domain = DOMAINS[random]
-// domain = "flatheadbeacon.com"
+// const url = "https://www.cnn.com/2019/10/07/health/germs-home-wellness/index.html"
+const url = "https://www.thestar.com/news/gta/2019/10/16/mayor-john-tory-throws-support-behind-ontario-line-in-deal-with-province-that-would-avoid-subway-upload.html"
+// const url = "https://www.scmp.com/week-asia/politics/article/3033238/hong-kongs-snowden-refugees-appeal-trudeau-ahead-canadian"
+// const url = "https://www.afp.com/fr/infos/334/f1-environnement-hamilton-attaque-lagriculture-et-se-prend-une-volee-de-bois-vert-doc-1lh1j62"
+// const url = "https://thepioneerwoman.com/cooking/dark-chocolate-brownies/"
 
-const mapper = new getsitemap.SiteMapper()
-mapper.map(domain, "2019-10-17").then((sitemapstream) => {
-  const file = fs.createWriteStream("./data/sitemaptest.txt")
-  sitemapstream.pipe(file)
+hittp.head(url).then((headers) => {
+  const length = parseInt(headers["content-length"])
+  console.log(length)
+  const buffer = Buffer.alloc(length)
+  hittp.get(url, {buffer}).then((html) => {
+    // console.log(buffer.toString())
+  })
 })
+
+// const random = Math.floor(Math.random() * DOMAINS.length)
+// let domain = DOMAINS[random]
+// domain = "thehumanist.com"
+
+// const mapper = new getsitemap.SiteMapper()
+// mapper.map(domain, "2019-10-17").then((sitemapstream) => {
+//   const file = fs.createWriteStream("./data/sitemaptest.txt")
+//   sitemapstream.pipe(file)
+// })

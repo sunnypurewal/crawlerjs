@@ -5,16 +5,18 @@ const fs = require("fs")
 const os = require("os")
 const getsitemap = require("getsitemap")
 const hittp = require("hittp")
-const Mercury = require("@postlight/mercury-parser")
-const shuffle = require("knuth-shuffle").knuthShuffle
+const { Worker, isMainThread, parentPort } = require('worker_threads');
 
 if (cluster.isMaster) {
-
   let i = 0
   let domains = null
   try {
     domains = JSON.parse(fs.readFileSync("./data/domains.json"))
-    shuffle(domains)
+    const random = Math.floor(Math.random() * domains.length)
+    // domains = domains.slice(random, random+1)
+    domains = ["thehumanist.com"]
+    // let domain = DOMAINS[random]
+    // shuffle(domains)
   } catch (err) {
     console.error(err)
     return
@@ -22,7 +24,7 @@ if (cluster.isMaster) {
   const cpus = os.cpus().length
   const workers = new Array(cpus)
   for (let i = 0; i < cpus; i++) {
-    workers.push(cluster.fork({filename:`worker-${i}${Date.now()}`}))
+    workers.push(cluster.fork({filename:`./data/worker-${i}${Date.now()}`}))
   }
 
   cluster.on("online", (worker) => {
@@ -46,9 +48,9 @@ if (cluster.isMaster) {
   return
 }
 
-const since = "2019-10-17"
+const since = "2019-10-18"
 const mapper = new getsitemap.SiteMapper()
-const file = fs.createWriteStream(process.env.filename)
+// const file = fs.createWriteStream(process.env.filename)
 process.on("message", (msg) => {
   const urls = msg.split(" ").map(u => hittp.str2url(u))
   for (const url of urls) {
@@ -61,17 +63,16 @@ process.on("message", (msg) => {
         const pageurl = hittp.str2url(split[0])
         if (!pageurl) return
         i += 1
-        hittp.get(pageurl).then((html) => {
-          Mercury.parse(pageurl.href, {html, contentType:"text"}).then((article) => {
-            file.write(`${pageurl.href}||${article.title}||${article.content}||${article.date_published}||${article.author}`)
-            i -= 1
-            if (i === 0 && closed) {
-              console.log("Done crawling", url.href)
-              process.send("done")
-            }
-          })
+        
+        hittp.get(pageurl, {encoded:false}).then((html) => {
+          console.log(typeof(html))
+          const worker = new Worker("./onhtml.js")
+          console.log("Sending message", Date.now())
+          const shared = new SharedArrayBuffer(html.length)
+          const buffer = new ArrayBuffer(html.length)
+          worker.postMessage(html)
         }).catch((err) => {
-          //console.error(err.message)
+          console.error(err.message)
         })
       })
       sitemapstream.on("close", () => {
