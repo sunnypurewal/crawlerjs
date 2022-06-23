@@ -21,7 +21,7 @@
     "hittp": "file:./local_modules/hittp",
     "htmlparser2": "^4.0.0",
     "jquery": "^3.4.1",
-    "jsdom": "^15.2.0",
+    "jsdom": "^16.5.0",
     "knuth-shuffle": "^1.0.8",
     "libxmljs": "^0.19.7",
     "parse5": "^5.1.0",
